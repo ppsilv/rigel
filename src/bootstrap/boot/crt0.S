@@ -95,6 +95,32 @@ _start:
         JSR     delay_seconds
 
         MOVE.B  #'1',WR_CHAR
+
+        /* Duart A init */
+        // DUART_ACR = 0x00; (seleciona baud Set 1)
+        move.b #0x00, (DUART_BASE + 0x09).l
+        // DUART_SRA_CSRA = 0xCC; (Rx/Tx = 38400 baud, cristal 3.6864MHz)
+        move.b #0xCC, (DUART_BASE + 0x03).l
+        // DUART_CRA = 0x10; (reseta ponteiro MR -> aponta p/ MR1A)
+        move.b #0x10, (DUART_BASE + 0x05).l
+        // DUART_MR1A_MR2A = 0x13; (MR1A: 8 bits, sem paridade, char mode)
+        move.b #0x13, (DUART_BASE + 0x01).l
+        // DUART_MR1A_MR2A = 0x07; (MR2A: modo normal, 1 stop bit)
+        move.b #0x07, (DUART_BASE + 0x01).l
+        // DUART_CRA = 0x20; (reset receiver)
+        move.b #0x20, (DUART_BASE + 0x05).l
+        // DUART_CRA = 0x30; (reset transmitter)
+        move.b #0x30, (DUART_BASE + 0x05).l
+        // DUART_CRA = 0x05; (habilita Rx e Tx)
+        move.b #0x05, (DUART_BASE + 0x05).l
+
+        MOVE.B  #'2',WR_CHAR
+        jsr     clear_screen
+        lea     bootstrap_string,%a0
+        jsr     print_string
+
+        MOVE.B  #'3',WR_CHAR
+
 /*
 ; Busca de RAM para m68k (Orion68)
 ; Retorna em A0 o endereço onde a RAM termina.
@@ -103,20 +129,21 @@ _start:
 /* Find the total of SRAM */
 FIND_RAM:
     MOVE.L  #0x00080000,%A0    /*; A0 = Endereço inicial da busca (Ajuste para o seu mapa)*/
-    MOVE.L  #0x55AA55AA,%D1    /*; D1 = Padrão de teste (alternando 0s e 1s)*/
+    MOVE.L  #0x55AA55AA,%D3    /*; D3 = Padrão de teste (alternando 0s e 1s)*/
     MOVE.L  #0x00000400,%D2    /*; D2 = Incremento de salto (ex: 1KB)*/
 
-    MOVE.B  #'2',WR_CHAR
 
 .busca_loop:
-    ADD.L   %D2,%A0            /*; Avança o ponteiro de memória*/
     MOVE.L  (%A0),%D0          /*; Salva o dado original da memória no D0*/
-    MOVE.L  %D1,(%A0)          /*; Escreve o padrão de teste na RAM*/
+    MOVE.L  %D3,(%A0)          /*; Escreve o padrão de teste na RAM*/
 
-    CMP.L   (%A0),%D1          /*; Lê da RAM e compara com o padrão*/
+    CMP.L   (%A0),%D3          /*; Lê da RAM e compara com o padrão*/
     BNE.S   .fim_ram          /*; Se não for igual (não há RAM), sai do loop*/
 
     MOVE.L  %D0,(%A0)          /*; Restaura o dado original (é RAM válida)*/
+    MOVE.L  %A0,%D1
+    BSR     print_hex_32
+    ADD.L   %D2,%A0            /*; Avança o ponteiro de memória*/
     BRA.S   .busca_loop       /*; Repete para o próximo bloco*/
 
 .fim_ram:
@@ -124,7 +151,7 @@ FIND_RAM:
         MOVE.L  %A0,%A4
         /*; A4 contém o endereço do fim da RAM.*/
 
-    MOVE.B  #'3',WR_CHAR
+    MOVE.B  #'4',WR_CHAR
 
 /********************************************/
 /* Clear the entire SRAM */
@@ -134,13 +161,17 @@ FIND_RAM:
         MOVE.L  #0x0,%D0
 .ClearLoop:
         MOVE.L  %D0,(%A0)+
+
+|    MOVE.L  %A0,%D1                    É MUITO LENTO A IMPRESSÃO DISSO
+|    BSR     print_hex_32
+
         CMPA.L  %A0,%A1
         BHI     .ClearLoop
 
         LEA     0x080400,%A0
         MOVE.L  %A4,(%A0)
 
-        MOVE.B  #'4',WR_CHAR
+        MOVE.B  #'5',WR_CHAR
 /*Aqui estava posicionando o SP no final da memoria existente.
   mas achei desnecessário. por que o SP tem que ficar no final
   da memoria existente? NÃO TEM pode ficar no fina do primeiro
@@ -163,34 +194,7 @@ copy_data:
         bra.s   copy_data
 go_ahead:
 
-        MOVE.B  #'5',WR_CHAR
-
-        /* Duart A init */
-        // DUART_ACR = 0x00; (seleciona baud Set 1)
-        move.b #0x00, (DUART_BASE + 0x09).l
-        // DUART_SRA_CSRA = 0xCC; (Rx/Tx = 38400 baud, cristal 3.6864MHz)
-        move.b #0xCC, (DUART_BASE + 0x03).l
-        // DUART_CRA = 0x10; (reseta ponteiro MR -> aponta p/ MR1A)
-        move.b #0x10, (DUART_BASE + 0x05).l
-        // DUART_MR1A_MR2A = 0x13; (MR1A: 8 bits, sem paridade, char mode)
-        move.b #0x13, (DUART_BASE + 0x01).l
-        // DUART_MR1A_MR2A = 0x07; (MR2A: modo normal, 1 stop bit)
-        move.b #0x07, (DUART_BASE + 0x01).l
-        // DUART_CRA = 0x20; (reset receiver)
-        move.b #0x20, (DUART_BASE + 0x05).l
-        // DUART_CRA = 0x30; (reset transmitter)
-        move.b #0x30, (DUART_BASE + 0x05).l
-        // DUART_CRA = 0x05; (habilita Rx e Tx)
-        move.b #0x05, (DUART_BASE + 0x05).l
-
         MOVE.B  #'6',WR_CHAR
-        jsr     clear_screen
-
-
-        lea     bootstrap_string,%a0
-        jsr     print_string
-
-        MOVE.B  #'7',WR_CHAR
 
         /*Para empilhar os parametros de uma função
           começamos do ultimo para o primeiro.
@@ -207,7 +211,7 @@ go_ahead:
         | Limpa a pilha após o retorno (3 argumentos * 4 bytes = 12 bytes)
         ADDA.L  #12, %SP
 
-        MOVE.B  #'8',WR_CHAR
+        MOVE.B  #'7',WR_CHAR
 
         /*INSTALLING INT2 HANDLER*/
         move.l  #Int2Handler, -(%SP)     | handler_addr = OS_TickISR (empilhado 1o, e' o ultimo parametro)
@@ -217,7 +221,7 @@ go_ahead:
 
         move.l  #1,%D1
         BSR     delay_seconds
-        MOVE.B  #'9',WR_CHAR
+        MOVE.B  #'8',WR_CHAR
 /*
         |INSTALLING TRAP1 HANDLER
         move.l  #Trap1Handler, -(%SP)    | handler_addr = trap1_handler (empilhado 1o, e' o ultimo parametro)
@@ -247,7 +251,7 @@ go_ahead:
 */
         move.l  #1,%D1
         BSR     delay_seconds
-        MOVE.B  #'a',WR_CHAR
+        MOVE.B  #'9',WR_CHAR
 
         lea     interrupt_status,%a0
         jsr     print_string
@@ -377,12 +381,46 @@ delay_seconds:
 DefaultHandler:
         rte
 
+print_hex_32:
+        movem.l %d0-%d3/%a0,-(%a7)
+        moveq   #7,%d2            /* 8 dígitos hexadecimais (32 bits / 4) */
+
+.loop:
+        rol.l   #4,%d1            /* 1º: Roda 4 bits à esquerda (joga o MSB para o LSB) */
+        move.l  %d1,%d3           /* 2º: Copia para o registrador de trabalho */
+        and.i   #0xF,%d3          /* 3º: Isola o nibble */
+        
+        cmp.b   #10,%d3
+        blt.s   .is_digit
+        add.b   #7,%d3            /* Ajusta para 'A'-'F' */
+.is_digit:
+        add.b   #'0',%d3          /* Converte para ASCII */
+
+        move.b  %d3,%d0
+        bsr     duart_send_char   /* Envia o caractere atual */
+
+        dbf     %d2,.loop
+
+        /* Envia comando VT102 para voltar 8 colunas: ESC [ 8 D */
+        move.b  #0x1B,%d0          /* ESC */
+        bsr     duart_send_char
+        move.b  #'[',%d0
+        bsr     duart_send_char
+        move.b  #'8',%d0          /* 8 posições para trás (8 dígitos) */
+        bsr     duart_send_char
+        move.b  #'D',%d0          /* Cursor Left (VT102) */
+        bsr     duart_send_char
+
+        movem.l (%a7)+,%d0-%d3/%a0
+        rts
 .section .text
 .align 2
 bootstrap_string:
         .byte   13, 10
         .ascii  "PDS317 - Bootstrap 2026 V1.0"
-        .byte   13, 10, 0
+        .byte   13, 10
+        .ascii  "Memory test: "
+        .byte   0
 interrupt_status:
         .ascii  "Bootstrap interrupt on"
         .byte   13, 10, 0

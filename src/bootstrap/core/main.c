@@ -11,15 +11,13 @@ int main(void)
 {
     char nome[32];
     *WR_CHAR='A';
-    duart_putc('B');
-    //duart_init_canal_a();
+    
     setvbuf(stdout, NULL, _IONBF, 0);   /* sem buffer: saida aparece na hora */
-
-    printf("\nRigel 0.1 -- newlib  m68k\n");
+    printf("\nRigel bootstrap 0.1 newlib for m68k\nMinimum hardware duart-disk0\n");
     printf("Qual o seu nome? ");
-    if (fgets(nome, sizeof nome, stdin))
+    if (fgets(nome, sizeof nome, stdin)){
         printf("Ola, %s", nome);
-
+    }
     printf("malloc funcionando: ");
     void *p = __builtin_malloc(100);
     printf("%s\n", p ? "sim" : "nao");

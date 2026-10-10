@@ -8,7 +8,7 @@
 /*-----------------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <fatfs/ff.h>			/* Basic definitions of FatFs */
+#include <ff.h>			/* Basic definitions of FatFs */
 #include "diskio.h"		/* Declarations FatFs MAI */
 #include "ata.h"
 

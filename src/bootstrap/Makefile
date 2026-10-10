@@ -30,7 +30,14 @@ LDFLAGS := $(CPU) -T rigel.ld -nostartfiles -Wl,--gc-sections -Wl,-Map=rigel.map
 # crt0 e' nosso; libc/libgcc entram automaticamente
 LDLIBS  := -L$(RIGELDIR)/lib -Wl,--start-group -lc -lgcc -Wl,--end-group
 
-SRCS := core/main.c core/syscalls.c boot/vector.c boot/ringbuffer.c 
+SRCS := core/main.c core/syscalls.c boot/vector.c boot/ringbuffer.c core/boot_kernel.c \
+../drivers/fatfs/ffunicode.c \
+../drivers/fatfs/ffsystem.c \
+../drivers/fatfs/ff.c \
+../drivers/ide/ata.c \
+../drivers/ide/diskio.c \
+
+
 
 ASMS := boot/crt0.S boot/interrupts.S ../drivers/duart/duartasm.S
 

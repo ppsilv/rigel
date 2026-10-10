@@ -84,6 +84,9 @@ SECTIONS
 
     _end = .;                      /* o heap (_sbrk) comeca aqui */
     end  = .;
+    /* RAM_ORIGIN + RAM_LENGTH passaria de 0xFFFF0, entao o topo da pilha e' fixo */
+    _stack_top  = 0x000FFFF0;
+    _heap_limit = 0x00081F00;      /* heap termina antes da bootinfo (0x81F00) e do kernel (0x82000) */
 
 
     /DISCARD/ : {
@@ -93,4 +96,4 @@ SECTIONS
     }    
 }
 
-/*ASSERT(_end <= _heap_limit, "Rigel: RAM insuficiente para .data + .bss + pilha")*/
+  ASSERT(_end <= _heap_limit, "Rigel: .data + .bss passam do limite do heap")

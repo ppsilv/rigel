@@ -97,9 +97,9 @@ static int ata_wait_busy_clear(void){
         timeout--;
     } while (timeout > 0);
     return 0;   // timeout - disco não respondeu a tempo 
-}*/
+}
 static int ata_wait_busy_clear_timed(uint32_t timeout_ms){
-    uint32_t start = get_tick_count();   /* ajuste ao nome real da sua API de RTC */
+    uint32_t start = get_tick_count();   // ajuste ao nome real da sua API de RTC 
     uint8_t status;
     do {
         status = *ATA_REG_STATUS;
@@ -113,7 +113,7 @@ static int has_master_disk4(void){
     uint8_t status;
     *ATA_REG_DRIVE_HEAD = 0xA0;
     for (volatile int i = 0; i < 100; i++);
-    /* Teste de assinatura */
+    // Teste de assinatura 
     *ATA_REG_SECTOR_COUNT = 0x55;
     *ATA_REG_SECTOR_NUM   = 0xAA;
     if (*ATA_REG_SECTOR_COUNT != 0x55 || *ATA_REG_SECTOR_NUM != 0xAA) {
@@ -126,42 +126,43 @@ static int has_master_disk4(void){
     }
     status = *ATA_REG_STATUS;
     if (status == 0xFF) {
-        return 0;   /* barramento flutuando, nada respondendo */
+        return 0;   // barramento flutuando, nada respondendo
     }
-    /* Disco parece presente (respondeu à assinatura), mas pode
-     * ainda estar em power-on / self-test. Espera sair de BUSY. */
+    // Disco parece presente (respondeu à assinatura), mas pode
+    //  ainda estar em power-on / self-test. Espera sair de BUSY.
     if (!ata_wait_busy_clear_timed(1000)) {
-        return 0;   /* presente mas nunca ficou pronto -> trate como falha */
+        return 0;   // presente mas nunca ficou pronto -> trate como falha 
     }
-    return 1;   /* disco presente e pronto */
+    return 1;   // disco presente e pronto 
 }
 static int has_master_disk3(void){
     uint8_t status;
-    /* Seleciona drive 0 (master) antes de testar - alguns
-     * controladores só respondem no barramento se DRIVE_HEAD
-     * estiver setado corretamente (bit 5 e 7 sempre em 1 por
-     * compatibilidade, LBA=0, drive=0) */
+    // Seleciona drive 0 (master) antes de testar - alguns
+    // controladores só respondem no barramento se DRIVE_HEAD
+    // estiver setado corretamente (bit 5 e 7 sempre em 1 por
+    // compatibilidade, LBA=0, drive=0) 
     *ATA_REG_DRIVE_HEAD = 0xA0;
-    /* pequeno delay pro barramento estabilizar após troca de drive */
+    // pequeno delay pro barramento estabilizar após troca de drive 
     for (volatile int i = 0; i < 100; i++);
-    /* Teste de assinatura: escreve e relê SECTOR_COUNT */
+    // Teste de assinatura: escreve e relê SECTOR_COUNT 
     *ATA_REG_SECTOR_COUNT = 0x55;
     *ATA_REG_SECTOR_NUM   = 0xAA;
     if (*ATA_REG_SECTOR_COUNT != 0x55 || *ATA_REG_SECTOR_NUM != 0xAA) {
-        return 0;   /* não gravou -> barramento flutuando, sem disco */
+        return 0;   // não gravou -> barramento flutuando, sem disco 
     }
     *ATA_REG_SECTOR_COUNT = 0xAA;
     *ATA_REG_SECTOR_NUM   = 0x55;
     if (*ATA_REG_SECTOR_COUNT != 0xAA || *ATA_REG_SECTOR_NUM != 0x55) {
         return 0;
     }
-    /* Confirma que STATUS não está com o barramento flutuando */
+    // Confirma que STATUS não está com o barramento flutuando
     status = *ATA_REG_STATUS;
     if (status == 0xFF) {
         return 0;
     }
-    return 1;   /* dispositivo presente */
+    return 1;   // dispositivo presente 
 }
+*/
 static int has_master_disk(void){
     // escreve um valor de teste em um registrador gravável
     *ATA_REG_SECTOR_COUNT = 0x55;
@@ -175,6 +176,7 @@ static int has_master_disk(void){
     // registrador responde normalmente, dispositivo presente
     return 1;
 }
+/*
 static int has_master_disk2(void){
     uint8_t status;
     // teste de assinatura
@@ -190,6 +192,7 @@ static int has_master_disk2(void){
     }
     return 1;
 }
+*/
 int ata_detect(void){
 	uint8_t status;
 
@@ -379,8 +382,8 @@ int ata_init(void)
 
 	for (short i = 0; i < PARTITION_MAX; i++) {
 		if (drives[0].parts[i].size) {
-			log_notice("ata%d: found partition with %d sectors\n", i, drives[0].parts[i].size);
-			log_notice("ata%d:  %d Mb\n", i, drives[0].parts[i].size*512/1000000);
+			log_notice("ata%d: found partition with %d sectors\n", i,(int) drives[0].parts[i].size);
+			log_notice("ata%d:  %lu KB\n", i,(long) (drives[0].parts[i].size*512)/1000);
 		}
 	}
 	return 1;

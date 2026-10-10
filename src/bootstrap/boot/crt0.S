@@ -71,6 +71,12 @@ _vectors:
 .equ WR_CHAR, 0xFF912B
 .equ DUART_BASE, 0x00FF9000
 
+        .section .text.start,"ax"
+        .global _start
+_header:
+        bra.w   _start                  /* offset 0: o Rigel salta aqui */
+        .long   0x4B524E4C              /* offset 4: magic 'KRNL' */
+        .long   _end                    /* offset 8: fim do kernel com .bss */
 _start:
         ORI.W   #0x0700,%SR         /* Desabilita interrupções no boot */
         LEA     0x000FFFF0,%A7      /* Garante o ponteiro da pilha limpo */

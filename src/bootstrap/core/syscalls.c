@@ -14,8 +14,9 @@
 #undef errno
 extern int errno;
 
-const char _heap_limit = 0x100000-(32*1024);     /* fim do heap, onde comeca a reserva da pilha */
-const char _end= _heap_limit - (256*1024);            /* inicio do heap (rigel.ld) */
+extern char _end;           /* definido no rigel.ld */
+extern char _heap_limit;    /* idem */
+
 
 static char *heap_ptr = 0;
 

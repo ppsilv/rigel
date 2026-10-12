@@ -151,6 +151,7 @@ static void do_ideinit(int argc, char *argv[])
     }
 }
 
+extern int trap0_entry(int num, long a1, long a2, long a3, long a4, long a5, long a6, long a7);
 extern int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6, long a7);
 
 
@@ -174,7 +175,7 @@ int kernel_main(){
 
     LOCK(saved_sr);
     
-    sys_setramvector(0x000800b4,(uint32_t)trap0_handler);
+    sys_setramvector(0x000800b4,(uint32_t)trap0_entry);
 
     sys_setramvector(0x00080090,(uint32_t)OS_TickISR);
     sys_setramvector(0x00080008, (uint32_t)exc_bus_error);

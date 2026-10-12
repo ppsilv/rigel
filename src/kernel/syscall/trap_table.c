@@ -107,76 +107,76 @@ long sys_setramvector(long stub_addr, long handler_addr);
 
 // Tabela de despacho direta (índice = número da syscall)
 const sys_call_t sys_call_table[] = {
-    (sys_call_t) sys_exit,
-    (sys_call_t) sys_spawn,
-    (sys_call_t) sys_sleep,
-    (sys_call_t) sys_yield,
-    (sys_call_t) sys_open,
-    (sys_call_t) sys_close,
-    (sys_call_t) sys_read,
-    (sys_call_t) sys_write,
-    (sys_call_t) sys_sinc,
-    (sys_call_t) sys_lseek,
-    (sys_call_t) sys_ioctl,
-    (sys_call_t) sys_dup,
-    (sys_call_t) sys_unlink,
-    (sys_call_t) sys_chmod,
-    (sys_call_t) sys_tell,
-    (sys_call_t) sys_size,
-    (sys_call_t) sys_eof,
-    (sys_call_t) sys_rename,
-    (sys_call_t) sys_stat,
-    (sys_call_t) sys_opendir,
-    (sys_call_t) sys_readdir,
-    (sys_call_t) sys_mount,
-    (sys_call_t) sys_closedir,
-    (sys_call_t) sys_fmkdir,
-    (sys_call_t) sys_unmount,
-    (sys_call_t) sys_findfirst,
-    (sys_call_t) sys_findnext,
-    (sys_call_t) sys_vga_putchar,
-    (sys_call_t) sys_gotoxy,
-    (sys_call_t) sys_gohome,
-    (sys_call_t) sys_settextcolor,
-    (sys_call_t) sys_clrscr,
-    (sys_call_t) sys_drawvline,
-    (sys_call_t) sys_drawhline,
-    (sys_call_t) sys_drawline,
-    (sys_call_t) sys_drawcircle,
-    (sys_call_t) sys_drawcirclehelper,
-    (sys_call_t) sys_fillcircle,
-    (sys_call_t) sys_fillcirclehelper,
-    (sys_call_t) sys_drawroundrect,
-    (sys_call_t) sys_fillroundrect,
-    (sys_call_t) sys_fillrect,
-    (sys_call_t) sys_readtime,
-    (sys_call_t) sys_writetime,
-    (sys_call_t) sys_eepromreadbyte,
-    (sys_call_t) sys_eepromwritebyte,
-    (sys_call_t) sys_ringbufferread,
-    (sys_call_t) sys_ringbufferwrite,
-    (sys_call_t) sys_duartacfg,
-    (sys_call_t) sys_duartaread,
-    (sys_call_t) sys_duartawrite,
-    (sys_call_t) sys_duartbcfg,
-    (sys_call_t) sys_duartbread,
-    (sys_call_t) sys_duartbwrite,
-    (sys_call_t) sys_ppiacfg,
-    (sys_call_t) sys_ppiportaread,
-    (sys_call_t) sys_ppiportawrite,
-    (sys_call_t) sys_ppibcfg,
-    (sys_call_t) sys_ppiportbread,
-    (sys_call_t) sys_ppiportbwrite,
-    (sys_call_t) sys_ppiccfg,
-    (sys_call_t) sys_ppiportcread,
-    (sys_call_t) sys_ppiportcwrite,
-    (sys_call_t) sys_connect,
-    (sys_call_t) sys_bind,
-    (sys_call_t) sys_listen,
-    (sys_call_t) sys_accept,
-    (sys_call_t) sys_setsockopt,
-    (sys_call_t) sys_getpid,
-    (sys_call_t) sys_setramvector,
+    (sys_call_t) sys_exit,                  /*0*/
+    (sys_call_t) sys_spawn,                 /*1*/
+    (sys_call_t) sys_sleep,                 /*2*/
+    (sys_call_t) sys_yield,                 /*3*/
+    (sys_call_t) sys_open,                  /*4*/
+    (sys_call_t) sys_close,                 /*5*/
+    (sys_call_t) sys_read,                  /*6*/
+    (sys_call_t) sys_write,                 /*7*/
+    (sys_call_t) sys_sinc,                  /*8*/
+    (sys_call_t) sys_lseek,                 /*9*/
+    (sys_call_t) sys_ioctl,                 /*10*/
+    (sys_call_t) sys_dup,                   /*11*/
+    (sys_call_t) sys_unlink,                /*12*/
+    (sys_call_t) sys_chmod,                 /*13*/
+    (sys_call_t) sys_tell,                  /*14*/
+    (sys_call_t) sys_size,                  /*15*/
+    (sys_call_t) sys_eof,                   /*16*/
+    (sys_call_t) sys_rename,                /*17*/
+    (sys_call_t) sys_stat,                  /*18*/
+    (sys_call_t) sys_opendir,               /*19*/
+    (sys_call_t) sys_readdir,               /*20*/
+    (sys_call_t) sys_mount,                 /*21*/
+    (sys_call_t) sys_closedir,              /*22*/
+    (sys_call_t) sys_fmkdir,                /*23*/
+    (sys_call_t) sys_unmount,               /*24*/
+    (sys_call_t) sys_findfirst,             /*25*/
+    (sys_call_t) sys_findnext,              /*26*/
+    (sys_call_t) sys_vga_putchar,           /*27*/
+    (sys_call_t) sys_gotoxy,                /*28*/
+    (sys_call_t) sys_gohome,                /*29*/
+    (sys_call_t) sys_settextcolor,          /*30*/
+    (sys_call_t) sys_clrscr,                /*31*/
+    (sys_call_t) sys_drawvline,             /*32*/
+    (sys_call_t) sys_drawhline,             /*33*/
+    (sys_call_t) sys_drawline,              /*34*/
+    (sys_call_t) sys_drawcircle,            /*35*/
+    (sys_call_t) sys_drawcirclehelper,      /*36*/
+    (sys_call_t) sys_fillcircle,            /*37*/
+    (sys_call_t) sys_fillcirclehelper,      /*38*/
+    (sys_call_t) sys_drawroundrect,         /*39*/
+    (sys_call_t) sys_fillroundrect,         /*40*/
+    (sys_call_t) sys_fillrect,              /*41*/
+    (sys_call_t) sys_readtime,              /*42*/
+    (sys_call_t) sys_writetime,             /*43*/
+    (sys_call_t) sys_eepromreadbyte,        /*44*/
+    (sys_call_t) sys_eepromwritebyte,       /*45*/
+    (sys_call_t) sys_ringbufferread,        /*46*/
+    (sys_call_t) sys_ringbufferwrite,       /*47*/
+    (sys_call_t) sys_duartacfg,             /*48*/
+    (sys_call_t) sys_duartaread,            /*49*/
+    (sys_call_t) sys_duartawrite,           /*50*/
+    (sys_call_t) sys_duartbcfg,             /*51*/
+    (sys_call_t) sys_duartbread,            /*52*/
+    (sys_call_t) sys_duartbwrite,           /*53*/
+    (sys_call_t) sys_ppiacfg,               /*54*/
+    (sys_call_t) sys_ppiportaread,          /*55*/
+    (sys_call_t) sys_ppiportawrite,         /*56*/
+    (sys_call_t) sys_ppibcfg,               /*57*/
+    (sys_call_t) sys_ppiportbread,          /*58*/
+    (sys_call_t) sys_ppiportbwrite,         /*59*/
+    (sys_call_t) sys_ppiccfg,               /*60*/
+    (sys_call_t) sys_ppiportcread,          /*61*/
+    (sys_call_t) sys_ppiportcwrite,         /*62*/
+    (sys_call_t) sys_connect,               /*63*/
+    (sys_call_t) sys_bind,                  /*64*/
+    (sys_call_t) sys_listen,                /*65*/
+    (sys_call_t) sys_accept,                /*66*/
+    (sys_call_t) sys_setsockopt,            /*67*/
+    (sys_call_t) sys_getpid,                /*68*/
+    (sys_call_t) sys_setramvector,          /*69*/
 };
 /*
 Reparei que SYS_CONNECT/SYS_BIND/SYS_LISTEN/SYS_ACCEPT/SYS_SETSOCKOPT 

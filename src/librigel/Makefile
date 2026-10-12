@@ -7,7 +7,11 @@ AR        := $(CROSS)ar
 SYSCALL_H ?= $(RIGELDIR)/src/kernel/include/sys/syscall.h
 FAMILY    ?= new      # new = SYS_OPEN/READ/WRITE...  old = SYS_FOPEN/FREAD/FWRITE... (a que o trap0.c trata)
 
-CFLAGS  := -m68000 -Os -Wall -ffreestanding -ffunction-sections -fdata-sections -I$(RIGELDIR)/include -I$(RIGELDIR)/include/rigel
+CFLAGS  := -m68000 -Os -Wall -ffreestanding -ffunction-sections -fdata-sections \
+-I$(RIGELDIR)/include \
+-I$(RIGELDIR)/include/rigel \
+-I$(RIGELDIR)/src/kernel/include
+
 ASFLAGS := -m68000
 
 all: $(RIGELDIR)/lib/rigel/librigel.a $(RIGELDIR)/lib/rigel/crt0_app.o
@@ -22,7 +26,7 @@ build/%.o: libsrc/%.S | build
 build/%.o: libsrc/%.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(RIGELDIR)/lib/rigel/librigel.a: build/syscalls_gen.o build/glue.o
+$(RIGELDIR)/lib/rigel/librigel.a: build/syscalls_gen.o build/glue.o build/syscall.o
 	$(AR) rcs $@ $^
 
 $(RIGELDIR)/lib/rigel/crt0_app.o: libsrc/crt0_app.S

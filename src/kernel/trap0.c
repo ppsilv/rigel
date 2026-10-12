@@ -17,7 +17,6 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     (void)a4; (void)a5; (void)a6; (void)a7;
 
     switch (num) {
-
     /* ---- implementadas ---- */
     case SYS_EXIT:
         OS_TaskExit();            /* nao volta */
@@ -36,7 +35,6 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
         return vfs_ioctl((int)a1, (int)a2, (void *)a3);
     case SYS_LSEEK:
         return vfs_lseek((int)a1, (uint32_t)a2, (int)a3);
-
     /* ---- TODO: ainda sem implementacao ---- */
     case SYS_SPAWN: return -1;   /* TODO */
     case SYS_SLEEP: return -1;   /* TODO */

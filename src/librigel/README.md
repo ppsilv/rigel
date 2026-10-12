@@ -10,11 +10,11 @@ e `include/rigel/*.h`. Se dois SYS_* tiverem o mesmo numero ele para com erro.
 Saida em `lib/`: `librigel.a`, `crt0_app.o`, `app.ld`.
 
 ## Construir um programa
-    m68k-elf-gcc -m68000 -Os -ffreestanding -Ilibrigel/include -c hello.c -o hello.o
-    m68k-elf-gcc -m68000 -nostartfiles -T librigel/lib/app.ld -Wl,-q \
-        librigel/lib/crt0_app.o hello.o -Llibrigel/lib -L<dir da newlib> \
-        -Wl,--start-group -lrigel -lc -lgcc -Wl,--end-group -o hello.elf
-    m68k-elf-readelf -r hello.elf        # so deve aparecer R_68K_32 (e PC8/16/32)
+m68k-elf-gcc -m68000 -Os -ffreestanding -c tstsys.c -I $RIGELDIR/include -I ./include -DUSE_PRINTF
+m68k-elf-gcc -m68000 -nostartfiles -Wl,-q -T $RIGELDIR/src/env_kapps/app.ld $RIGELDIR/lib/rigel/crt0_app.o tstsys.o  -L$RIGELDIR/lib -L$RIGELDIR/lib/rigel -Wl,--start-group -lrigel -lc -lgcc -Wl,--end-group -o tstsys.elf
+
+
+
 
 `-lrigel` vem ANTES de `-lc` (dentro do grupo), porque a newlib chama write/read/sbrk...
 que estao nesta biblioteca.

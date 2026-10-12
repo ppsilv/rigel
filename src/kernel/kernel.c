@@ -112,15 +112,14 @@ void run_scheduler_test2(void)
    // OS_TaskCreate(TaskA_Entry, NULL, stack_task_c, STACK_SIZE, 3);
 
     /* teste do spawn via ELF */
-    kernel_puts("Openning /tstraw.elf\n");
+    kernel_puts("Openning init the first process...\n");
     FIL test_fd;
-    if (f_open(&test_fd, "/tstraw.elf", FA_READ) == FR_OK) {
-        kernel_puts("File opened, trying to load\n");
+    if (f_open(&test_fd, "/shell.elf", FA_READ) == FR_OK) {
         if (load_elf_task(&test_fd, 0, NULL) != 0) {
             kprintf("Falha ao dar spawn no duart.elf\n");
         }
     } else {
-        kprintf("Nao achei /duart.elf no disco\n");
+        kprintf("Nao achei /shell.elf no disco\n");
     }
 
     OS_Start();   /* so' agora entrega o controle pro scheduler */
@@ -147,7 +146,7 @@ static void do_ideinit(int argc, char *argv[])
     if (fr != FR_OK) {
         kputs("PANIC: Erro ao montar FAT\n");
     }else{
-        kputs(": FAT success mounted!\n");
+        kputs("FAT success mounted!\n");
     }
 }
 
@@ -156,14 +155,14 @@ extern int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, l
 
 
 int kernel_main(){
-    kernel_puts("Kernel on line\n");
+    kernel_puts("\n\n\n\n");
     short saved_sr;
 
     uint32_t heap_base = (uint32_t)&__kernel_end;
     uint32_t heap_size = __estack - heap_base - 0x4000;  /* 16 KB de folga pra pilha */
     kmalloc_init((void*)0x92000, 0x8000);
 
-    kputs("    * IDE ");
+    kernel_puts("Rigel 0.10 kernel 0.10\n");
     do_ideinit(0,NULL);
 
 //    kmalloc_init(&__kernel_end, 0x10000);   /* ajuste o tamanho pro que sobrar de RAM ali */
@@ -192,7 +191,7 @@ int kernel_main(){
          (void)j;       
     }
     UNLOCK(saved_sr);
-    kernel_puts("running tasks\n ");
+    kernel_puts("Loading process #1 init\n ");
 
     run_scheduler_test2();
 

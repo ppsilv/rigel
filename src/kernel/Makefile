@@ -34,7 +34,9 @@ SRCS =  kernel.c kmalloc.c scheduler.c trap0.c ./syscall/trap_table.c  task_crea
 ./lib/string/strstr.c ./lib/string/memccpy.c ./lib/string/memcmp.c ./lib/string/memmem.c ./lib/string/memset.c ./lib/string/strchr.c \
 ./lib/string/strcspn.c ./lib/string/strerror.c ./lib/string/strncat.c ./lib/string/strncpy.c ./lib/string/strnlen.c ./lib/string/strspn.c ./lib/string/strtok.c \
 ./vfs/vfs.c  ./vfs/vfs_drivers.c  ./vfs/vfs_fat.c  ./vfs/vfs_null.c  ./vfs/vfs_proc.c  ./vfs/vfs_serial.c  ./vfs/vfs_tty.c  ./vfs/vfs_zero.c \
+./vfs/vfs_vga.c \
 ./drivers/duart/duart.c \
+./drivers/kbd/ringbuffer.c \
 ./drivers/ide/ata.c \
 ./drivers/ide/diskio.c \
 ./drivers/fatfs/ff.c \

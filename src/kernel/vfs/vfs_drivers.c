@@ -69,6 +69,14 @@ extern int duartA_ioctl(File *file, int cmd, void *arg);
 extern int duartA_close(File *file);
 extern size_t duartA_lseek(File *file, size_t offset, int whence);
 
+/* console de video (vfs_vga.c) */
+extern int vgacon_open(File *file, const char *path, int flags);
+extern int vgacon_read(File *file, void *buffer, size_t size);
+extern int vgacon_write(File *file, const void *buffer, size_t size);
+extern int vgacon_close(File *file);
+extern int vgacon_ioctl(File *file, int cmd, void *arg);
+extern size_t vgacon_lseek(File *file, size_t offset, int whence);
+
 // ============================================
 // TABELA DE DRIVERS
 // ============================================
@@ -93,5 +101,6 @@ DeviceDriver drivers[] = {
     {"/proc/uptime",  proc_uptime_open,  proc_read,   NULL,         proc_close,   NULL,         proc_lseek},
     {"/dev/tty0",     duartA_open,       duartA_read, duartA_write, duartA_close, duartA_ioctl, duartA_lseek},
     {"/dev/console",  duartA_open,       duartA_read, duartA_write, duartA_close, duartA_ioctl, duartA_lseek},
+    {"/dev/vcon",     vgacon_open,       vgacon_read, vgacon_write, vgacon_close, vgacon_ioctl, vgacon_lseek},
     {NULL, NULL, NULL, NULL, NULL, NULL, NULL}
 };

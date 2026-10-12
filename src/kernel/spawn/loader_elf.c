@@ -14,7 +14,7 @@
 #include "elf_reloc.h"
 
 #define TASK_STACK_SIZE  8192
-#define SLOT_SIZE        (256 * 1024)
+/* SLOT_SIZE vem de <sys/slots.h> */
 #define IMAGE_LIMIT      (SLOT_SIZE - TASK_STACK_SIZE)   /* imagem nao pode invadir a pilha */
 
 #define BE16(p,o) ((uint16_t)(((p)[o] << 8) | (p)[(o)+1]))
@@ -105,9 +105,9 @@ int load_elf_task(FIL *fd, int argc, char *argv[])
         goto fail;
     }
 
-    kprintf("slot=%02d base=0x%08lx size=0x%lx relocs=%lu entry=0x%08lx\n",
-            slot, (unsigned long)task_base, (unsigned long)image_size,
-            (unsigned long)applied, (unsigned long)(task_base + entry));
+    //kprintf("slot=%02d base=0x%08lx size=0x%lx relocs=%lu entry=0x%08lx\n",
+    //        slot, (unsigned long)task_base, (unsigned long)image_size,
+    //        (unsigned long)applied, (unsigned long)(task_base + entry));
 
     {
         void (*entry_fn)(void) = (void (*)(void))(task_base + entry);

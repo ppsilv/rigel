@@ -11,6 +11,22 @@
 #include <sys/vfs.h>
 #include <sys/syscall.h>
 #include <sys/scheduler.h>   /* OS_TaskExit(), current_task */
+/*
+ * Depuracao do SYS_WRITE: imprime na tela do KERNEL (VGA, via kernel_puts)
+ * os argumentos recebidos e o retorno do vfs_write.
+ * Para desligar: apague a linha "#define TRAP_DEBUG 1".
+ */
+//#define TRAP_DEBUG 1
+#ifdef TRAP_DEBUG
+extern void kernel_puts(const char *s);
+extern void kernel_puthex(uint32_t v);
+#define DBG_S(s) kernel_puts(s)
+#define DBG_H(v) kernel_puthex((uint32_t)(v))
+#else
+#define DBG_S(s) ((void)0)
+#define DBG_H(v) ((void)0)
+#endif
+
 
 int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6, long a7)
 {
@@ -28,6 +44,15 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_READ:
         return vfs_read((int)a1, (void *)a2, (uint32_t)a3);
     case SYS_WRITE:
+        int r;
+        DBG_S("\n[W fd="); DBG_H(a1);
+        DBG_S(" buf=");     DBG_H(a2);
+        DBG_S(" len=");     DBG_H(a3);
+        DBG_S("]\n");
+        r = vfs_write((int)a1, (void *)a2, (uint32_t)a3);
+        DBG_S("[W ret=");   DBG_H(r);
+        DBG_S("]\n");
+        return r;
         return vfs_write((int)a1, (void *)a2, (uint32_t)a3);
     case SYS_CLOSE:
         return vfs_close((int)a1);

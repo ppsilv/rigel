@@ -13,7 +13,7 @@
  * sobrepor). Ajuste SLOT_BASE/SLOT_SIZE/SLOT_COUNT conforme o que
  * sobrar de RAM livre na sua placa.
  */
-#define SLOT_BASE   0x00092000UL
+#define SLOT_BASE   0x000A2000UL
 #define SLOT_SIZE   0x00040000UL   /* 256K por slot */
 #define SLOT_COUNT  10
 

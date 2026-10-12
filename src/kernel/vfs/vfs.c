@@ -12,6 +12,18 @@ File *fd_table[256];
 static int fd_count = 0;
 
 extern DeviceDriver drivers[];
+extern void kernel_puts(const char *s);
+extern void kernel_puthex(uint32_t v);
+
+/* Depuracao do vfs_write (imprime na VGA). Para desligar: apague a linha abaixo. */
+/* #define VFS_DEBUG 1 */
+#ifdef VFS_DEBUG
+#define VDBG_S(s) kernel_puts(s)
+#define VDBG_H(v) kernel_puthex((uint32_t)(v))
+#else
+#define VDBG_S(s) ((void)0)
+#define VDBG_H(v) ((void)0)
+#endif
 
 // ============================================
 // FUNÇÕES DE ACESSO À TABELA DE DESCRITORES
@@ -76,54 +88,49 @@ void kfree_fd(int fd) {
 // ============================================
 // VFS_OPEN
 // ============================================
-// vfs.c - vfs_open()
+// Ordem: 1) tabela de dispositivos (/dev/..., /proc/...)  2) arquivos no FAT.
+// Os dispositivos TEM que ser consultados primeiro: se o fat_open vier antes
+// e aceitar o caminho, o fd fica preso a um arquivo do cartao (fat_write) e
+// o texto nunca chega ao console.
 extern int fat_open(File *file, const char *path, int flags);
 int vfs_open(const char *path, int flags) {
-    //kprintf("path[%s] flags[%x]\n",path,flags);
     File *file = (File*)kmalloc(sizeof(File));
-    //kprintf("kmalloc\n");
-    if (!file) {
-            //kprintf("essa merda deu erro logo no malloc\n");
+    if (!file)
         return -1;
-    }
-    //kprintf("89\n");
-    memset(file, 0, sizeof(File));
-    //kprintf("91\n");
-    file->name = strdup(path);
-    //kprintf("93\n");
-    
-    if (fat_open(file, path, flags) == 0) {
-        int fd = allocate_fd(file);
-        if (fd >= 0) {
-            //kprintf("essa merda funcionou\n");
-            return fd;
-        }
-        kfree(file->name);
-        kfree(file);
 
+    memset(file, 0, sizeof(File));
+    file->name = strdup(path);
+    if (!file->name) {
+        kfree(file);
         return -1;
     }
-    //kprintf("104\n");
-    
+
+    /* 1) dispositivos */
     for (int i = 0; drivers[i].path != NULL; i++) {
-        //kprintf("vfs_open: comparando '%s' com '%s'\n", path, drivers[i].path);
         if (strcmp(path, drivers[i].path) == 0) {
-           // printf("vfs_open: ENCONTROU! i=%d\n", i);
             if (drivers[i].open(file, path, flags) == 0) {
                 int fd = allocate_fd(file);
-                if (fd >= 0) {
-                    //kprintf("vfs_open: fd=%d (SUCESSO!)\n", fd);
+                if (fd >= 0)
                     return fd;
-                }
             }
+            /* e' um dispositivo conhecido: nao tenta o FAT */
+            kfree(file->name);
+            kfree(file);
+            return -1;
         }
     }
-    //kprintf("119\n");
-    
+
+    /* 2) arquivo no FAT */
+    if (fat_open(file, path, flags) == 0) {
+        int fd = allocate_fd(file);
+        if (fd >= 0)
+            return fd;
+        if (file->close)
+            file->close(file);
+    }
+
     kfree(file->name);
     kfree(file);
-    //kprintf("essa merda deu erro\n");
-
     return -1;
 }
 
@@ -142,7 +149,9 @@ int vfs_read(int fd, void *buffer, size_t size) {
 // ============================================
 int vfs_write(int fd, const void *buffer, size_t size) {
     File *file = get_file_from_fd(fd);
-    if (!file) return -1;
+    VDBG_S("[vw file="); VDBG_H((uintptr_t)file);
+    if (!file) { VDBG_S(" NULL]\n"); return -1; }
+    VDBG_S(" write="); VDBG_H((uintptr_t)file->write); VDBG_S("]\n");
     if (file->write) return file->write(file, buffer, size);
     return -1;
 }
@@ -194,52 +203,39 @@ size_t vfs_lseek(int fd, size_t offset, int whence) {
 // ============================================
 // VFS_INIT
 // ============================================
-void vfs_inita(void) {
-    memset(fd_table, 0, sizeof(fd_table));
-    fd_count = 0;
-    
-    int fd0 = vfs_open("/dev/tty", O_RDWR);
-    int fd1 = vfs_open("/dev/tty", O_RDWR);
-    int fd2 = vfs_open("/dev/tty", O_RDWR);
-    
-    if (fd0 != 0) {
-        fd_table[0] = fd_table[fd0];
-        fd_table[fd0] = NULL;
-        fd_count--;
-    }
-    if (fd1 != 1) {
-        fd_table[1] = fd_table[fd1];
-        fd_table[fd1] = NULL;
-        fd_count--;
-    }
-    if (fd2 != 2) {
-        fd_table[2] = fd_table[fd2];
-        fd_table[fd2] = NULL;
-        fd_count--;
-    }
-    
-    //kprintf("VFS inicializado: stdin=0, stdout=1, stderr=2\n");
+// allocate_fd() comeca em 3, entao os tres vfs_open abaixo caem em
+// fd 3, 4 e 5. Depois movemos cada File para 0, 1 e 2 (stdin, stdout,
+// stderr). Sem isso o write(1,...) dos apps devolve -1.
+// Dispositivos ligados a stdin/stdout/stderr dos apps. Para trocar a E/S
+// basta mudar estes tres nomes:
+//   "/dev/vcon" -> teclado (ringbuffer) + video VGA   (vfs_vga.c)
+//   "/dev/tty"  -> DUART com \n -> \r\n e eco       (tty_read/tty_write)
+//   "/dev/tty0" -> DUART direto (duartA_*), sem conversao de \n
+#define STDIN_DEVICE   "/dev/vcon"
+#define STDOUT_DEVICE  "/dev/vcon"
+#define STDERR_DEVICE  "/dev/vcon"
+
+static void move_fd(int de, int para) {
+    if (de < 0 || de == para)
+        return;
+    fd_table[para] = fd_table[de];
+    fd_table[de]   = NULL;           /* o File continua em uso: fd_count nao muda */
 }
 
-
 void vfs_init(void) {
-    //kprintf("vfs_init: memset\n");
     memset(fd_table, 0, sizeof(fd_table));
     fd_count = 0;
 
-    //kprintf("vfs_init: abrindo fd0\n");
-    int fd0 = vfs_open("/dev/tty", O_RDWR);
-    //kprintf("vfs_init: fd0 =[%d] ",fd0);
+    int fd0 = vfs_open(STDIN_DEVICE,  O_RDWR);
+    int fd1 = vfs_open(STDOUT_DEVICE, O_RDWR);
+    int fd2 = vfs_open(STDERR_DEVICE, O_RDWR);
 
-    //kprintf("vfs_init: abrindo fd1\n");
-    int fd1 = vfs_open("/dev/tty", O_RDWR);
-    //kprintf("vfs_init: fd2 =[%d] ",fd1);
+    if (fd0 < 0 || fd1 < 0 || fd2 < 0) {
+        kernel_puts("vfs_init: nao abriu stdin/stdout/stderr\n");
+        return;
+    }
 
-    //kprintf("vfs_init: abrindo fd2\n");
-    int fd2 = vfs_open("/dev/tty", O_RDWR);
-    //kprintf("vfs_init: fd2 =[%d] ",fd2);
-
-    //kprintf("vfs_init: ajustando\n");
-    /* ... */
-    //kprintf("vfs_init: OK\n");
+    move_fd(fd0, 0);
+    move_fd(fd1, 1);
+    move_fd(fd2, 2);
 }

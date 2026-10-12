@@ -158,7 +158,7 @@ typedef long _ssize_t;
 typedef _ssize_t __ssize_t;
 
 #ifndef __machine_mbstate_t_defined
-/* Conversion state information.  */
+/* Conversion state information.  
 typedef struct
 {
   int __count;
@@ -166,8 +166,8 @@ typedef struct
   {
     wint_t __wch;
     unsigned char __wchb[4];
-  } __value;		/* Value so far.  */
-} _mbstate_t;
+  } __value;	
+} _mbstate_t;*/
 #endif
 
 #ifndef __machine_iconv_t_defined

@@ -7,7 +7,7 @@
 
 #define KERNEL_PATH    "/boot/kernel.bin"
 #define KERNEL_BASE    0x00082000UL
-#define KERNEL_LIMIT   0x000FDFF0UL      /* 0xFFFF0 - 0x2000 reservados p/ pilha */
+#define KERNEL_LIMIT   0x000A2000UL
 #define KERNEL_MAGIC   0x4B524E4CUL      /* 'KRNL' */
 #define CHUNK          4096
 

@@ -1,5 +1,5 @@
 # Makefile do Rigel
-CROSS   ?= m68k-elf-
+CROSS   := m68k-elf-
 CC      := $(CROSS)gcc
 OBJCOPY := $(CROSS)objcopy
 SIZE    := $(CROSS)size

@@ -382,8 +382,8 @@ int ata_init(void)
 
 	for (short i = 0; i < PARTITION_MAX; i++) {
 		if (drives[0].parts[i].size) {
-			log_notice("ata%d: found partition with %d sectors\n", i,(int) drives[0].parts[i].size);
-			log_notice("ata%d:  %lu KB\n", i,(long) (drives[0].parts[i].size*512)/1000);
+			log_notice("ata%d: found partition with %lu sectors\n", i,(unsigned long) drives[0].parts[i].size);
+			log_notice("ata%d:  %lu KB\n", i,(unsigned long) (drives[0].parts[i].size*512)/1000000);
 		}
 	}
 	return 1;

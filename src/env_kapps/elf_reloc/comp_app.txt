@@ -1,0 +1,21 @@
+Todo app do Rigel é linkado com três coisas, nessa ordem:
+
+crt0_app.o: o ponto de entrada do app. Ele zera o .bss, chama main e depois exit.
+-lrigel: as funções de sistema, que chamam o kernel por TRAP #0. Isso inclui open, read, write, close, lseek, _exit e getpid, mais isatty, fstat, kill e sbrk.
+-lc e -lgcc: a newlib, que você já tem, e o suporte do compilador (divisão e multiplicação de 32 bits no 68000, por exemplo).
+
+O comando de link fica assim:
+
+m68k-elf-gcc -m68000 -nostartfiles -T librigel/lib/app.ld -Wl,-q \
+    librigel/lib/crt0_app.o prog.o \
+    -Llibrigel/lib -L<pasta da sua newlib> \
+    -Wl,--start-group -lrigel -lc -lgcc -Wl,--end-group \
+    -o prog.elf
+
+O -Wl,-q é obrigatório porque o loader do kernel usa as relocações. O --start-group serve para a newlib e a librigel se enxergarem em qualquer ordem, já que -lc chama write e read e quem as define é a -lrigel.
+
+Depois de linkar, confira com m68k-elf-readelf -r prog.elf. Só devem aparecer R_68K_32, e no máximo R_68K_PC8, R_68K_PC16 e R_68K_PC32. Qualquer outro tipo significa que o loader vai recusar o programa.
+
+Quem usa só printf e fopen da newlib não chama a rigel_* diretamente. Essas funções só entram quando o app quer algo que a newlib não tem, como rigel_clrscr ou rigel_gotoxy. Nesse caso o app inclui <rigel/rigel.h>.
+
+O README.md dentro do librigel.tar.gz tem esse mesmo comando.

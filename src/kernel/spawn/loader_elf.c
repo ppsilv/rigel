@@ -14,6 +14,8 @@
 #include "elf_reloc.h"
 
 #define TASK_STACK_SIZE  8192
+#define ARGS_AREA        1024      /* bloco argc/argv no topo da pilha da task */
+#define ARGS_MAX         16
 /* SLOT_SIZE vem de <sys/slots.h> */
 #define IMAGE_LIMIT      (SLOT_SIZE - TASK_STACK_SIZE)   /* imagem nao pode invadir a pilha */
 
@@ -21,8 +23,37 @@
 #define BE32(p,o) (((uint32_t)(p)[o] << 24) | ((uint32_t)(p)[(o)+1] << 16) | \
                    ((uint32_t)(p)[(o)+2] << 8) | (uint32_t)(p)[(o)+3])
 
+/*
+ * Monta o bloco de argumentos em 'p' (alinhado em 4), tamanho maximo ARGS_AREA:
+ *   p+0 : argc            (long)
+ *   p+4 : argv            (ponteiro = p+8)
+ *   p+8 : argv[0..argc-1], NULL, depois as strings
+ * No 1o instante da task o SP aponta exatamente para 'p' (veja o crt0_app.S).
+ * Retorna 0 ok, -1 se nao couber.
+ */
+static int build_args(uint8_t *p, int argc, char *argv[])
+{
+    if (argc < 0 || argc > ARGS_MAX) return -1;
+    uint32_t *w   = (uint32_t *)p;
+    char    **av  = (char **)(p + 8);
+    char     *str = (char *)(p + 8 + 4 * (argc + 1));
+    char     *end = (char *)(p + ARGS_AREA);
+
+    for (int i = 0; i < argc; i++) {
+        size_t n = strlen(argv[i]) + 1;
+        if (str + n > end) return -1;
+        memcpy(str, argv[i], n);
+        av[i] = str;
+        str  += n;
+    }
+    av[argc] = NULL;
+    w[0] = (uint32_t)argc;
+    w[1] = (uint32_t)(uintptr_t)av;
+    return 0;
+}
+
 /* Retorna 0 em sucesso (task criada e na fila), -1 em erro. */
-int load_elf_task(FIL *fd, int argc, char *argv[])
+int load_elf_spawn(FIL *fd, int argc, char *argv[], int *pid)
 {
     uint8_t  hb[52];
     elf32_program_header ph;
@@ -105,22 +136,34 @@ int load_elf_task(FIL *fd, int argc, char *argv[])
         goto fail;
     }
 
-    //kprintf("slot=%02d base=0x%08lx size=0x%lx relocs=%lu entry=0x%08lx\n",
-    //        slot, (unsigned long)task_base, (unsigned long)image_size,
-    //        (unsigned long)applied, (unsigned long)(task_base + entry));
+    kprintf("slot=%02d base=0x%08lx size=0x%lx relocs=%lu entry=0x%08lx\n",
+            slot, (unsigned long)task_base, (unsigned long)image_size,
+            (unsigned long)applied, (unsigned long)(task_base + entry));
 
     {
         void (*entry_fn)(void) = (void (*)(void))(task_base + entry);
         uint8_t *task_stack = (uint8_t *)(task_base + SLOT_SIZE - TASK_STACK_SIZE);
+        uint8_t *args_blk   = (uint8_t *)(task_base + SLOT_SIZE - ARGS_AREA);
+
+        if (build_args(args_blk, argc, argv) != 0) {
+            kprintf("Argumentos demais / grandes demais.\n"); goto fail;
+        }
 
         /* id = OS_SLOT_ID_BASE + slot: e' assim que o OS_Reap sabe qual slot liberar */
-        tcb_t *tcb = OS_TaskCreate(entry_fn, NULL, task_stack, TASK_STACK_SIZE,
+        tcb_t *tcb = OS_TaskCreate(entry_fn, NULL, task_stack, TASK_STACK_SIZE - ARGS_AREA,
                                    OS_SLOT_ID_BASE + slot);
         if (!tcb) { kprintf("Falha ao criar task.\n"); goto fail; }
+        if (pid) *pid = OS_SLOT_ID_BASE + slot;
         return 0;   /* o slot agora pertence a' task */
     }
 
 fail:
     Slots_Free(slot);
     return -1;
+}
+
+/* Compatibilidade: mesma assinatura de antes. */
+int load_elf_task(FIL *fd, int argc, char *argv[])
+{
+    return load_elf_spawn(fd, argc, argv, NULL);
 }

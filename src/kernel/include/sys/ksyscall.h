@@ -82,6 +82,7 @@
 #define SYS_SINC               0x004C
 #define SYS_LSEEK              0x004D
 #define SYS_IOCTL              0x004E
-#define SYS_GETKBDKEY          0x004F
+#define SYS_WAITPID            0x004F
+#define SYS_GETKBDKEY          0x0050
 
 #endif

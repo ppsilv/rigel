@@ -34,7 +34,8 @@ TABLE = [
   ("GETPID", None, "getpid", None), ("FUNLINK", None, "unlink", None),
   ("FRENAME", None, "rename", None), ("FMKDIR", None, "mkdir", None),
   # ---- processo ----
-  ("SPAWN",  "proc", "spawn",  "char *path"),
+  ("SPAWN",  "proc", "spawn",  "char *path, char **argv"),
+  ("WAITPID","proc", "waitpid","long pid"),
   ("SLEEP",  "proc", "sleep",  "long ticks"),
   ("YIELD",  "proc", "yield",  "void"),
   ("SETRAMVECTOR", "proc", "setramvector", "long stub_addr, long handler_addr"),
@@ -104,6 +105,9 @@ TABLE = [
   ("LISTEN",     "net", "listen",     "long sockfd, long backlog"),
   ("ACCEPT",     "net", "accept",     "long sockfd, void *addr, long *addrlen"),
   ("SETSOCKOPT", "net", "setsockopt", "long sockfd, long level, long optname, void *optval, long optlen"),
+
+  ("GETKBDKEY", "proc", "getkbdkey",  "void"),
+
 ]
 
 # As duas familias de numeros para as mesmas operacoes (nova -> antiga)

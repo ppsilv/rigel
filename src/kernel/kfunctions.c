@@ -5,7 +5,6 @@
 #include <sys/scheduler.h>
 
 long sys_exit(long code){}
-long sys_spawn(char *path){}
 long sys_sleep(long ticks){}
 long sys_yield(void){}
 

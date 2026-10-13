@@ -19,6 +19,7 @@
         SYSCALL rename                       0x0011   /* SYS_FRENAME */
         SYSCALL mkdir                        0x0017   /* SYS_FMKDIR */
         SYSCALL rigel_spawn                  0x0001   /* SYS_SPAWN */
+        SYSCALL rigel_waitpid                0x004F   /* SYS_WAITPID */
         SYSCALL rigel_sleep                  0x0002   /* SYS_SLEEP */
         SYSCALL rigel_yield                  0x0003   /* SYS_YIELD */
         SYSCALL rigel_setramvector           0x0045   /* SYS_SETRAMVECTOR */
@@ -80,3 +81,4 @@
         SYSCALL rigel_listen                 0x0041   /* SYS_LISTEN */
         SYSCALL rigel_accept                 0x0042   /* SYS_ACCEPT */
         SYSCALL rigel_setsockopt             0x0043   /* SYS_SETSOCKOPT */
+        SYSCALL rigel_getkbdkey              0x0050   /* SYS_GETKBDKEY */

@@ -106,6 +106,12 @@ void run_scheduler_test(void)
 }
 extern int load_pic_elf_standalone(FIL *fd, int argc, char *argv[]);
 
+/*
+O tipo de ELF: ET_EXEC, executável estático (não é ET_DYN/PIE). 
+Ele é linkado no endereço 0 e guarda as relocações (-Wl,-q). 
+O loader soma a base do slot em cada R_68K_32.
+*/
+
 void run_scheduler_test2(void)
 {
    // OS_TaskCreate(TaskA, NULL, stack_task_a, STACK_SIZE, 1);

@@ -21,8 +21,9 @@ VASMS =
 
 # Lista de arquivos C (CORRIGIDO: não tinha um espaço)
 SRCS =  kernel.c kmalloc.c scheduler.c trap0.c ./syscall/trap_table.c  task_create.c ./mm/slots.c kfunctions.c \
- ./spawn/loader_elf.c \
- ./spawn/elf_reloc.c \
+./spawn/loader_elf.c \
+./spawn/elf_reloc.c \
+./spawn/spawn.c \
 ./exceptions/exceptions.c \
 ./lib/klibc/inttostr.c \
 ./lib/klibc/klibc.c \

@@ -12,7 +12,8 @@
 
 void printerro(int eno);
 
-void do_help(int argc, char *argv[]);
+extern void do_help(int argc, char *argv[]);
+extern void do_load(int argc, char *argv[]);
 
 const cmd_entry_t g_cmd_table[] = {
 //    {"cat",         1,  1, &do_cat,         "Display contents of <file>"},
@@ -37,6 +38,7 @@ const cmd_entry_t g_cmd_table[] = {
 //    {"ascii",       0,  0, &do_ascii,       "Print hex code of keyboard key" },
 //    {"recv",        0,  0, &do_receiver,    "Receiver a file and save to disk" },
 
+    {"load",	    0,  0, &do_load,	    "Load a fixed program hello.elf" },
     {"help",	    0,  0, &do_help,	    "Show available commands" },
 
     {0, 0, 0, 0, 0 }

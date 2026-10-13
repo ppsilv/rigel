@@ -11,12 +11,13 @@
 #include <sys/vfs.h>
 #include <sys/ksyscall.h>
 #include <sys/scheduler.h>   /* OS_TaskExit(), current_task */
+
 /*
  * Depuracao do SYS_WRITE: imprime na tela do KERNEL (VGA, via kernel_puts)
  * os argumentos recebidos e o retorno do vfs_write.
- * Para desligar: apague a linha "#define TRAP_DEBUG 1".
+ * Para ligar: descomente a linha "#define TRAP_DEBUG 1".
  */
-//#define TRAP_DEBUG 1
+/* #define TRAP_DEBUG 1 */
 #ifdef TRAP_DEBUG
 extern void kernel_puts(const char *s);
 extern void kernel_puthex(uint32_t v);
@@ -27,14 +28,30 @@ extern void kernel_puthex(uint32_t v);
 #define DBG_H(v) ((void)0)
 #endif
 
+/* DIAGNOSTICO de spawn/exit/waitpid: escreve direto no VGA do kernel.
+ * Depois de resolver, comente a linha abaixo. */
+#define TRAP_DIAG 1
+#ifdef TRAP_DIAG
+extern void kernel_puts(const char *s);
+extern void kernel_puthex(uint32_t v);
+#endif
+
+extern int sys_spawn(const char *path, char **argv);   /* spawn.c */
+extern int OS_TaskAlive(int id);                       /* scheduler.c */
 
 int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6, long a7)
 {
     (void)a4; (void)a5; (void)a6; (void)a7;
 
     switch (num) {
+
     /* ---- implementadas ---- */
     case SYS_EXIT:
+#ifdef TRAP_DIAG
+        kernel_puts("\n[kernel] SYS_EXIT pid=");
+        kernel_puthex(current_task ? (uint32_t)current_task->id : 0);
+        kernel_puts("\n");
+#endif
         OS_TaskExit();            /* nao volta */
         return 0;
     case SYS_GETPID:
@@ -43,7 +60,7 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
         return vfs_open((const char *)a1, (int)a2);
     case SYS_READ:
         return vfs_read((int)a1, (void *)a2, (uint32_t)a3);
-    case SYS_WRITE:
+    case SYS_WRITE: {
         int r;
         DBG_S("\n[W fd="); DBG_H(a1);
         DBG_S(" buf=");     DBG_H(a2);
@@ -53,15 +70,27 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
         DBG_S("[W ret=");   DBG_H(r);
         DBG_S("]\n");
         return r;
-        return vfs_write((int)a1, (void *)a2, (uint32_t)a3);
+    }
     case SYS_CLOSE:
         return vfs_close((int)a1);
     case SYS_IOCTL:
         return vfs_ioctl((int)a1, (int)a2, (void *)a3);
     case SYS_LSEEK:
         return vfs_lseek((int)a1, (uint32_t)a2, (int)a3);
+
+    case SYS_SPAWN:
+        return sys_spawn((const char *)a1, (char **)a2);
+    case SYS_WAITPID:
+#ifdef TRAP_DIAG
+        kernel_puts("\n[kernel] WAITPID pid="); kernel_puthex((uint32_t)a1); kernel_puts("\n");
+#endif
+        while (OS_TaskAlive((int)a1));    /* o tick preempta; o filho continua rodando */
+#ifdef TRAP_DIAG
+        kernel_puts("\n[kernel] WAITPID terminou\n");
+#endif
+        return 0;
+
     /* ---- TODO: ainda sem implementacao ---- */
-    case SYS_SPAWN: return -1;   /* TODO */
     case SYS_SLEEP: return -1;   /* TODO */
     case SYS_YIELD: return -1;   /* TODO */
     case SYS_FOPEN: return -1;   /* TODO */
@@ -132,52 +161,8 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_READRTC: return -1;   /* TODO */
     case SYS_WRITERTC: return -1;   /* TODO */
     case SYS_SINC: return -1;   /* TODO */
-    case SYS_GETKBDKEY:
-            return ring_buf_get_char();
+
     default:
         return -1;                /* numero de syscall desconhecido */
     }
 }
-
-/*
-
-Sugestão para você
-
-Uma biblioteca só, librigel.a, usada com -lrigel, como o -lc e o -lm. Dentro dela:
-
-o glue da newlib (_exit, open, read, write, close, lseek, getpid, sbrk, isatty, fstat, kill);
-os wrappers dos serviços do rigel (gotoxy, clrscr, fillrect, ppi_*, duart_*, rtc_*, eeprom_*, connect…).
-
-E os headers organizados por serviço, no estilo:
-<rigel/vga.h>, 
-<rigel/ppi.h>, 
-<rigel/duart.h>, 
-<rigel/rtc.h>, 
-<rigel/net.h>. 
-
-Junto dela, dentro do mesmo “SDK” de apps, ficam o crt0 do app e o app.ld. 
-Quem compila um app só precisa do -I do SDK e do -lrigel, e nunca vê os números das syscalls.
-
-Se um dia quiser separar, o padrão da newlib seria libgloss-rigel.a só para o glue do C e librigel.a para 
-os serviços. Mas enquanto for um projeto só seu, uma biblioteca é mais simples.
-
-Como as 70 e tantas funções são o mesmo stub com números diferentes, o melhor é gerá-las a partir do 
-syscall.h com um script, para os números nunca ficarem digitados em dois lugares. Posso escrever esse 
-script e os headers, se você me disser dois pontos: o prefixo dos wrappers (gotoxy ou rigel_gotoxy?) e 
-se os números dos SYS_* já estão estáveis, ou ainda vão mudar.
-
-O que o arquivo faz:
-
-Os case de OPEN, READ, WRITE, CLOSE, IOCTL e LSEEK são os do seu arquivo original, com as mesmas chamadas vfs_*.
-Acrescentei SYS_EXIT, que chama OS_TaskExit(), e SYS_GETPID, que devolve current_task->id. Para isso o arquivo inclui <sys/scheduler.h>. Se current_task ou OS_TaskExit não estiverem declarados nesse header, o compilador vai reclamar e você me manda a mensagem de erro.
-As outras 71 constantes devolvem -1 com  TODO , e o default também devolve -1.
-
-A família escolhida: a nova (0x48 em diante) é a única que funciona, porque é a que tem vfs_* por trás. A família SYS_F* fica como -1 
-TODO:. Assim cada operação tem só um número válido: open é 0x48, read é 0x4A, e assim por diante. A lib, o trap0.c e o syscall.h concordam.
-
-Duas coisas ainda faltam, e nenhuma delas bloqueia o resto:
-
-unlink, rename e mkdir da lib chamam syscalls que hoje são -1 TODO. Elas só passam a funcionar quando você escrever as funções correspondentes no VFS.
-SYS_SETRAMVECTOR e SYS_READRTC também são -1 TODO.
-
-*/

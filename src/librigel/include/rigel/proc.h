@@ -6,10 +6,12 @@
 extern "C" {
 #endif
 
-long rigel_spawn(char *path);
+long rigel_spawn(char *path, char **argv);
+long rigel_waitpid(long pid);
 long rigel_sleep(long ticks);
 long rigel_yield(void);
 long rigel_setramvector(long stub_addr, long handler_addr);
+long rigel_getkbdkey(void);
 
 #ifdef __cplusplus
 }

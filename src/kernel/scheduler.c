@@ -224,6 +224,18 @@ void OS_Reap(void)
     irq_restore(sr);
 }
 
+/* 1 se a task 'id' ainda existe (pronta, rodando ou bloqueada); 0 se terminou
+ * (DEAD) ou ja foi recolhida. Usada pelo SYS_WAITPID. So le, nao precisa mascarar IRQ. */
+int OS_TaskAlive(int id)
+{
+    for (int i = 0; i < OS_MAX_TASKS; i++) {
+        tcb_t *t = &task_pool[i];
+        if (t->id == id && t->state != TASK_UNUSED && t->state != TASK_DEAD)
+            return 1;
+    }
+    return 0;
+}
+
 void OS_Schedule(void)
 {
     if (ready_head == NULL)

@@ -14,6 +14,7 @@
  *
  * O read bloqueante espera em laco ocupado ate' o teclado mandar algo.
  */
+#include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/vfs.h>
@@ -60,17 +61,14 @@ int vgacon_read(File *file, void *buffer, size_t size)
     int echo     = (mode & TTY_NOECHO) == 0;
     int nonblock = raw && (mode & TTY_NONBLOCK) != 0;
 
-    kernel_puts("vgacon_read: \n");
-
     while (n < size) {
-    kernel_puts("vgacon_read: antes de ring_buf_is_empty\n");
         if (ring_buf_is_empty()) {
             if (raw && (n > 0 || nonblock))
                 break;                          /* modo cru: devolve o que ha' */
             while (ring_buf_is_empty())
                 ;                               /* espera uma tecla */
         }
-    kernel_puts("vgacon_read: depois de ring_buf_is_empty\n");
+
         uint8_t c = ring_buf_get();
 
         if (raw) {

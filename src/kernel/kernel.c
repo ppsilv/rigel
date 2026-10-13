@@ -7,6 +7,7 @@
 #include "sys/scheduler.h"
 #include "./exceptions/exceptions.h"
 #include <sys/vfs.h>
+#include "ringbuffer.h"
 
 FATFS FatFs; 
 
@@ -130,7 +131,8 @@ extern void run_scheduler_test(void);
 extern uint32_t __kernel_end;   /* símbolo do seu linker script, fim do .bss do kernel */
 extern uint32_t __estack; 
 extern void kmalloc_init(void *base, uint32_t size);
-extern void OS_TickISR();
+extern void OS_TickISR(void);
+extern void Int3Handler(void);
 extern void sys_setramvector(uint32_t stub_addr, uint32_t handler_addr);
 void kernel_puts(const char *s);
 extern void vfs_init(void);
@@ -165,18 +167,20 @@ int kernel_main(){
     kernel_puts("Rigel 0.10 kernel 0.10\n");
     do_ideinit(0,NULL);
 
+   kernel_puts("Ring buffer init\n");
+   ring_buf_init();
 //    kmalloc_init(&__kernel_end, 0x10000);   /* ajuste o tamanho pro que sobrar de RAM ali */
 
 
+    kernel_puts("Scheduler init\n");
     OS_Init();
-
+    kernel_puts("Posix system init\n");
     vfs_init();
 
     LOCK(saved_sr);
-    
     sys_setramvector(0x000800b4,(uint32_t)trap0_entry);
-
     sys_setramvector(0x00080090,(uint32_t)OS_TickISR);
+    sys_setramvector(0x00080096,(uint32_t)Int3Handler);
     sys_setramvector(0x00080008, (uint32_t)exc_bus_error);
     sys_setramvector(0x0008000C, (uint32_t)exc_address_error);
     sys_setramvector(0x00080010, (uint32_t)exc_illegal);
@@ -191,6 +195,7 @@ int kernel_main(){
          (void)j;       
     }
     UNLOCK(saved_sr);
+
     kernel_puts("Loading process #1 init\n ");
 
     run_scheduler_test2();

@@ -24,6 +24,7 @@ uint8_t ring_buf_get(void)
 void ring_buf_put(const uint8_t c)
 {
 	uint8_t next_head = rb->head + 1;   // wrap automático (uint8_t)
+
 	if (next_head == rb->tail) {
 		return;                          // buffer cheio: descarta o byte novo, não sobrescreve
 	}

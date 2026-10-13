@@ -75,20 +75,15 @@ void readline_with_history(char *buf)
     hist_cursor = -1;
 
     //Lê uma linha: if (fgets(line, sizeof line, stdin) == NULL)
-    printf("readline_with_history:\n");
-    rigel_ioctl(0, TIOC_SETMODE, (void *)(long)(TTY_RAW | TTY_NOECHO));
-    printf("readline_with_history: Depois do rigel_ioctl\n");
+
+    rigel_ioctl(0, TIOC_SETMODE, (void *)(long)(TTY_RAW));
 
     for (;;) {
         printf(">");
         fflush(stdout);
         if (read(0, &c, 1) != 1){       /* espera uma tecla */
-            printf("%c",c);
-            fflush(stdout);
             continue;
         }
-        printf("%c",c);
-        fflush(stdout);
 
         if (c == KEY_ENTER) {
             putchar('\n');
@@ -140,7 +135,6 @@ void readline_with_history(char *buf)
         if (len < LINE_MAX - 1) {
             buf[len++] = (char) c;
             buf[len] = '\0';
-            putchar((char) c);
         }
     }
     rigel_ioctl(0, TIOC_SETMODE, (void *)0);    

@@ -47,14 +47,8 @@ int main(void)
     fprintf(stdout,"Saida stdout\n");
     fprintf(stderr,"Saida stderr\n");
 */
-    while(1){
-        printf("Essa area pode ser usada\n para manutencao no futuro.\nPressione k para sair\n");
-        if (fgets(nome, sizeof nome, stdin)){
-            printf("Digitado:[%s]\n", nome);
-        }
-        if( nome[0] == 'k' )
-            break;
-    }
+    printf("Press <enter> to go ahead...\n");
+    fgets(nome, sizeof nome, stdin);
     /* depois de serial, video, disco e f_mount ja estarem ok */
     if (boot_mount()){
         printf("boot: no disk present..\n");

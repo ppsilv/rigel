@@ -29,7 +29,7 @@ _vectors:
           .long    0x00080084      /*SpuriousHandler       0x0060*/
           .long    0x0008008a      /*Int1Handler           0x0064*/
           .long    0x00080090      /*Int2Handler           0x0068*/
-          .long    Int3Handler     /*0x00080096*/      /*Int3Handler           0x006c*/
+          .long    0x00080096      /*Int3Handler           0x006c*/
           .long    0x0008009c      /*Int4Handler           0x0070*/
           .long    0x000800a2      /*Int5Handler           0x0074*/
           .long    0x000800a8      /*Int6Handler           0x0078*/
@@ -65,6 +65,7 @@ _vectors:
 .extern duart_send_char
 .extern build_jump_table
 .extern sys_setramvector
+.extern Int3Handler
 .extern Trap1Handler
 .extern sys_setramvector
 
@@ -228,6 +229,13 @@ go_ahead:
         move.l  #1,%D1
         BSR     delay_seconds
         MOVE.B  #'8',WR_CHAR
+
+        |INSTALLING Int3Handler 0x00080096
+        move.l  #Int3Handler, -(%SP)    | handler_addr = Int3_Handler (empilhado 1o, e' o ultimo parametro)
+        move.l  #0x00080096, -(%SP)      | stub_addr = 0x00080096 (empilhado 2o, e' o 1o parametro)
+        BSR     sys_setramvector         | Chama a função C
+        ADDA.L  #8, %SP                  | 2 argumentos * 4 bytes = 8 (o comentario diz "3 argumentos", mas a conta certa e' 2)
+
 /*
         |INSTALLING TRAP1 HANDLER
         move.l  #Trap1Handler, -(%SP)    | handler_addr = trap1_handler (empilhado 1o, e' o ultimo parametro)

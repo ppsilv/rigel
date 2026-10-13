@@ -29,14 +29,5 @@ void putchar(char c) {
 }
 */
 void kputchar(char c) {
-    asm volatile (
-        "movem.l %%d0/%%d1/%%a0,-(%%sp)\n\t"  // Save modified registers
-        "move.b %0, %%d0\n\t"                 // Put character in D0
-        "move.w #2, %%d1\n\t"                 // Put function code in D1
-        "trap #0\n\t"                         // Call TRAP #1
-        "movem.l (%%sp)+,%%d0/%%d1/%%a0"      // Restore registers
-        :
-        : "r" (c)
-        : "d0", "d1", "a0", "cc", "memory"
-    );
+    
 }

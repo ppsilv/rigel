@@ -15,7 +15,7 @@ LDFLAGS = -T ./kernel.ld -L../../lib -nostdlib -Map=kernel.map
 LDLIBS =
 
 # 1. ADICIONADO: Lista de arquivos em Assembly (.S)
-ASMS =  crt0.S ctx_switch_68000.S ./exceptions/exceptions_asm.S trap0_entry.S
+ASMS =  crt0.S ctx_switch_68000.S interrupts.S ./exceptions/exceptions_asm.S trap0_entry.S
 
 VASMS =
 

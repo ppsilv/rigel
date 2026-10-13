@@ -1,115 +1,96 @@
 /*
- * shell_history.c
+ * shell_history.c -- leitura de linha com historico (UP/DOWN) para o shell Rigel.
  *
- * Historico de comandos com navegacao via seta pra cima (0x10) e
- * seta pra baixo (0x11) -- byte unico, sem sequencia de escape, pelo
- * que voce reportou do seu terminal.
- *
- * INTEGRACAO: troque a leitura de caractere (ring_buf_get_char) e escrita
- * (putchar_serial/vputs_serial) pelas funcoes reais que seu shell ja
- * usa hoje pra ler/escrever no console.
+ * UP (0x10) / DOWN (0x11) trocam o comando NA MESMA LINHA, sem '\n'.
+ * Uso:
+ *   char cmdline[LINE_MAX];
+ *   for (;;) {
+ *       fputs("rigel> ", stdout); fflush(stdout);
+ *       readline_with_history(cmdline);
+ *       history_add(cmdline);
+ *       executa_comando(cmdline);
+ *   }
  */
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#include "ringbuffer.h"
 #include <unistd.h>
 #include <rigel/rigel.h>      /* rigel_ioctl, TIOC_SETMODE, TTY_RAW, TTY_NOECHO */
- 
 
-
-#define HIST_SIZE   16    /* quantos comandos guardar -- ajuste como quiser */
-#define LINE_MAX    128   /* tamanho maximo de uma linha de comando */
+#define HIST_SIZE   16        /* quantos comandos guardar */
+#undef  LINE_MAX
+#define LINE_MAX    128       /* tamanho maximo de uma linha */
 
 #define KEY_UP     0x10
 #define KEY_DOWN   0x11
-#define KEY_BS     0x08   /* AJUSTE se seu backspace for outro codigo (ex: 0x7F) */
-#define KEY_ENTER  '\r'   /* ou '\n', conforme seu terminal manda */
-
+#define KEY_BS     0x08       /* mude para 0x7F se seu teclado mandar DEL */
+#define KEY_ENTER  '\r'
 
 static char history[HIST_SIZE][LINE_MAX];
-static int  hist_count = 0;     /* quantos comandos ja foram guardados no total */
-static int  hist_cursor = -1;   /* -1 = "linha nova" (fora do historico) */
+static int  hist_count  = 0;  /* total de comandos ja guardados */
+static int  hist_cursor = -1; /* -1 = linha nova (fora do historico) */
 
-/*
- * Apaga visualmente 'len' caracteres da linha atual no terminal e
- * escreve 'text' no lugar. Como terminal nao tem "desfazer", isso e'
- * feito na base do backspace + espaco + backspace.
- */
+/* Apaga 'old_len' caracteres da linha e escreve 'text' no lugar.
+ * fputs (e NAO puts) para nao emitir '\n'. */
 static void redraw_line(int old_len, const char *text)
 {
     for (int i = 0; i < old_len; i++) putchar('\b');
     for (int i = 0; i < old_len; i++) putchar(' ');
     for (int i = 0; i < old_len; i++) putchar('\b');
-    puts(text);
+    fputs(text, stdout);
+    fflush(stdout);
 }
 
-/*
- * Grava um comando executado no historico (chame isso depois que o
- * usuario der Enter e o comando for de fato executado -- nao grave
- * linhas vazias, e evite gravar duplicata consecutiva se quiser um
- * comportamento mais "bash-like", isso e' opcional).
- */
 void history_add(const char *cmd)
 {
     if (cmd[0] == '\0')
-        return; /* nao guarda linha vazia */
+        return;
 
     strncpy(history[hist_count % HIST_SIZE], cmd, LINE_MAX - 1);
     history[hist_count % HIST_SIZE][LINE_MAX - 1] = '\0';
     hist_count++;
-    hist_cursor = -1; /* toda vez que roda um comando novo, reseta a navegacao */
+    hist_cursor = -1;
 }
 
-/*
- * Le uma linha de comando do console, com edicao basica (backspace)
- * e navegacao de historico (setas). Retorna quando Enter e' pressionado.
- *
- * 'buf' precisa ter pelo menos LINE_MAX bytes.
- */
+/* Le uma linha (Enter termina). 'buf' precisa ter LINE_MAX bytes. */
 void readline_with_history(char *buf)
 {
     int len = 0;
+    unsigned char c;
     buf[0] = '\0';
-    unsigned char c='a';
     hist_cursor = -1;
 
-    //Lê uma linha: if (fgets(line, sizeof line, stdin) == NULL)
-
-    rigel_ioctl(0, TIOC_SETMODE, (void *)(long)(TTY_RAW));
+    rigel_ioctl(0, TIOC_SETMODE, (void *)(long)(TTY_RAW | TTY_NOECHO));
 
     for (;;) {
-        printf(">");
-        fflush(stdout);
-        if (read(0, &c, 1) != 1){       /* espera uma tecla */
+        if (read(0, &c, 1) != 1)
             continue;
-        }
 
-        if (c == KEY_ENTER) {
+        if (c == KEY_ENTER || c == '\n') {
             putchar('\n');
+            fflush(stdout);
             buf[len] = '\0';
+            rigel_ioctl(0, TIOC_SETMODE, (void *)0);   /* restaura modo normal */
             return;
         }
 
-        if (c == KEY_BS) {
+        if (c == KEY_BS || c == 0x7F) {
             if (len > 0) {
                 len--;
                 buf[len] = '\0';
-                putchar('\b');
-                putchar(' ');
-                putchar('\b');
+                putchar('\b'); putchar(' '); putchar('\b');
+                fflush(stdout);
             }
             continue;
         }
 
         if (c == KEY_UP) {
-            /* so' navega se existir comando mais antigo disponivel */
             if (hist_cursor + 1 < hist_count && hist_cursor + 1 < HIST_SIZE) {
                 hist_cursor++;
                 int idx = (hist_count - 1 - hist_cursor + HIST_SIZE) % HIST_SIZE;
                 redraw_line(len, history[idx]);
                 strcpy(buf, history[idx]);
-                len = strlen(buf);
+                len = (int)strlen(buf);
             }
             continue;
         }
@@ -120,9 +101,8 @@ void readline_with_history(char *buf)
                 int idx = (hist_count - 1 - hist_cursor + HIST_SIZE) % HIST_SIZE;
                 redraw_line(len, history[idx]);
                 strcpy(buf, history[idx]);
-                len = strlen(buf);
+                len = (int)strlen(buf);
             } else if (hist_cursor == 0) {
-                /* volta pra linha vazia, saindo do historico */
                 hist_cursor = -1;
                 redraw_line(len, "");
                 buf[0] = '\0';
@@ -131,24 +111,12 @@ void readline_with_history(char *buf)
             continue;
         }
 
-        /* caractere normal -- so' aceita se couber no buffer */
-        if (len < LINE_MAX - 1) {
-            buf[len++] = (char) c;
+        /* caractere normal: ecoa so' se imprimivel e couber no buffer */
+        if (c >= 0x20 && len < LINE_MAX - 1) {
+            buf[len++] = (char)c;
             buf[len] = '\0';
+            putchar(c);
+            fflush(stdout);
         }
     }
-    rigel_ioctl(0, TIOC_SETMODE, (void *)0);    
 }
-
-/*
- * Exemplo de uso no loop principal do shell:
- *
- *   char cmdline[LINE_MAX];
- *   for (;;) {
- *       vputs_serial("orion> ");
- *       readline_with_history(cmdline);
- *       history_add(cmdline);      // grava ANTES ou DEPOIS de executar,
- *                                  // tanto faz, contanto que seja sempre
- *       executa_comando(cmdline);
- *   }
- */

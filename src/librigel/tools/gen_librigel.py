@@ -2,7 +2,9 @@
 """
 gen_librigel.py -- gera os stubs de syscall e os headers da librigel a partir do syscall.h do kernel.
 
-Uso:  python3 tools/gen_librigel.py /caminho/do/kernel/include/sys/syscall.h [new|old]
+Uso:  python3 tools/gen_librigel.py /caminho/sys/syscall.h [new|old] [/caminho/sys/vfs.h]
+
+O 3o argumento (vfs.h do kernel) gera include/rigel/tty.h com as constantes TIOC_* e TTY_*.
 
 O 2o argumento escolhe QUAL familia de numeros os stubs open/close/read/write/lseek/fsync/ioctl usam.
 Tem que ser a que o trap0.c do kernel trata com "case":
@@ -109,9 +111,10 @@ NEW2OLD = {"OPEN":"FOPEN","CLOSE":"FCLOSE","READ":"FREAD","WRITE":"FWRITE",
            "LSEEK":"FLSEEK","SINC":"FSYNC","IOCTL":"FIOCTL"}
 
 def main():
-    if len(sys.argv) not in (2, 3):
+    if len(sys.argv) not in (2, 3, 4):
         sys.exit(__doc__)
-    family = sys.argv[2] if len(sys.argv) == 3 else "new"
+    family = sys.argv[2] if len(sys.argv) >= 3 else "new"
+    vfs_h  = sys.argv[3] if len(sys.argv) == 4 else None
     if family not in ("new", "old"):
         sys.exit("2o argumento: new ou old")
     if family == "old":
@@ -175,12 +178,31 @@ def main():
             h.append(f"long {name}({args});")
         h += ["", "#ifdef __cplusplus", "}", "#endif", "", f"#endif /* {g} */", ""]
         open(os.path.join(inc, grp + ".h"), "w").write("\n".join(h))
+    # --- rigel/tty.h: constantes TIOC_* e TTY_* lidas do vfs.h do kernel ---
+    tty = []
+    if vfs_h:
+        for line in open(vfs_h, encoding="utf-8", errors="replace"):
+            m = re.match(r"\s*#\s*define\s+((?:TIOC|TTY)_\w+)\s+(0[xX][0-9a-fA-F]+|\d+)", line)
+            if m:
+                tty.append((m.group(1), m.group(2)))
+        tvals = [int(v, 0) for n, v in tty if n.startswith("TIOC_")]
+        if len(tvals) != len(set(tvals)):
+            sys.exit("ERRO: dois TIOC_* com o mesmo valor em " + vfs_h)
+        t = ["/* GERADO por tools/gen_librigel.py a partir do vfs.h do kernel -- NAO EDITE. */",
+             "/* Uso:  rigel_ioctl(0, TIOC_SETMODE, (void *)(TTY_RAW | TTY_NOECHO)); */",
+             "#ifndef RIGEL_TTY_H", "#define RIGEL_TTY_H", ""]
+        t += [f"#define {n:<14} {v}" for n, v in tty]
+        t += ["", "#endif /* RIGEL_TTY_H */", ""]
+        open(os.path.join(inc, "tty.h"), "w").write("\n".join(t))
     um = ["/* GERADO -- inclui todos os servicos do Rigel. */", "#ifndef RIGEL_H", "#define RIGEL_H"]
     um += [f"#include <rigel/{g}.h>" for g in groups]
+    if os.path.exists(os.path.join(inc, "tty.h")):
+        um += ["#include <rigel/tty.h>"]
     um += ["#endif", ""]
     open(os.path.join(inc, "rigel.h"), "w").write("\n".join(um))
 
     ngen = sum(1 for t in table if t[0] in nums)
-    print(f"ok: familia '{family}'; {ngen} wrappers gerados; {len(SKIP & set(nums))} da outra familia ignorados")
+    print(f"ok: familia '{family}'; {ngen} wrappers gerados; {len(SKIP & set(nums))} da outra familia ignorados"
+          + (f"; tty.h com {len(tty)} constantes" if vfs_h else ""))
 
 main()

@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "sys/syscall.h"
+#include "sys/ksyscall.h"
 #include "fatfs/ff.h"
 #include "orion_rtc.h"
 
@@ -11,6 +11,12 @@ Camada 1 — syscalls crus (kernel): open(), read(), write(), close() lseek()
     leem/escrevem bytes crus, sem buffer nenhum, sem noção de "texto
     formatado". Isso é o equivalente exato do seu syscall.c.
 */
+
+static inline int do_trap1(int num) {
+    register int d0 asm("d0") = num;
+    asm volatile ("trap #0" : "+r"(d0) : : "memory");
+    return d0;
+}
 
 
 /* Faz a TRAP #0 com o número da syscall em D0, argumentos em D1/D2/D3 -
@@ -223,3 +229,10 @@ void rtc_write_time(rtc_time_t *wrtc) {
     do_trap3(SYS_WRITERTC, (long) wrtc, 0, 0);
 }
 
+/*
+ * Special keyboard getkey
+ */
+
+ char getkbdkey(){
+    return do_trap1(SYS_GETKBDKEY);
+ }

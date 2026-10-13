@@ -28,6 +28,16 @@
 #define TIOC_CLEAR  0x01
 #define TIOC_GETXY  0x02
 #define TIOC_SETXY  0x03
+#define TIOC_SETMODE 0x04   /* arg = (void *)flags TTY_*  : define o modo do /dev/vcon */
+#define TIOC_GETMODE 0x05   /* devolve os flags TTY_* atuais */
+
+// ============================================
+// FLAGS DE MODO DO /dev/vcon (TIOC_SETMODE)
+// Modo padrao = 0: leitura em linha, com eco e edicao (backspace).
+// ============================================
+#define TTY_RAW       0x01  /* read devolve assim que chega 1+ tecla, sem editar a linha */
+#define TTY_NOECHO    0x02  /* nao ecoa na tela o que e' digitado */
+#define TTY_NONBLOCK  0x04  /* so' com TTY_RAW: read devolve 0 se nao ha tecla, sem esperar */
 
 // ============================================
 // ESTRUTURA FILE

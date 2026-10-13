@@ -107,12 +107,12 @@ extern int load_pic_elf_standalone(FIL *fd, int argc, char *argv[]);
 
 void run_scheduler_test2(void)
 {
-    OS_TaskCreate(TaskA, NULL, stack_task_a, STACK_SIZE, 1);
-    OS_TaskCreate(TaskB, NULL, stack_task_b, STACK_SIZE, 2);
+   // OS_TaskCreate(TaskA, NULL, stack_task_a, STACK_SIZE, 1);
+   // OS_TaskCreate(TaskB, NULL, stack_task_b, STACK_SIZE, 2);
    // OS_TaskCreate(TaskA_Entry, NULL, stack_task_c, STACK_SIZE, 3);
 
     /* teste do spawn via ELF */
-    kernel_puts("Openning init the first process...\n");
+   
     FIL test_fd;
     if (f_open(&test_fd, "/shell.elf", FA_READ) == FR_OK) {
         if (load_elf_task(&test_fd, 0, NULL) != 0) {

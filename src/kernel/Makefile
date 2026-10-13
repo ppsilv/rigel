@@ -3,7 +3,7 @@ LD = m68k-elf-ld
 OBJCOPY = m68k-elf-objcopy
 VASM = vasmm68k_mot 
 
-CFLAGS = -Wall -O0 -I./include -I$(RIGELDIR)/rigel/include -ffreestanding -nostdlib -D__mc68000__ -m68000
+CFLAGS = -Wall -O0 -I./include -I$(RIGELDIR)/include -ffreestanding -nostdlib -D__mc68000__ -m68000
 CFLAGS += -DCHIP_$(CHIP_TYPE) -DROM_SIZE_BYTES=$(ROM_SIZE)
 CFLAGS += -fomit-frame-pointer
 

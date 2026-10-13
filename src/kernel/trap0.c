@@ -9,7 +9,7 @@
  */
 #include <stdint.h>
 #include <sys/vfs.h>
-#include <sys/syscall.h>
+#include <sys/ksyscall.h>
 #include <sys/scheduler.h>   /* OS_TaskExit(), current_task */
 /*
  * Depuracao do SYS_WRITE: imprime na tela do KERNEL (VGA, via kernel_puts)
@@ -132,7 +132,8 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_READRTC: return -1;   /* TODO */
     case SYS_WRITERTC: return -1;   /* TODO */
     case SYS_SINC: return -1;   /* TODO */
-
+    case SYS_GETKBDKEY:
+            return ring_buf_get_char();
     default:
         return -1;                /* numero de syscall desconhecido */
     }

@@ -10,4 +10,5 @@
 #include <rigel/duart.h>
 #include <rigel/ppi.h>
 #include <rigel/net.h>
+#include <rigel/tty.h>
 #endif

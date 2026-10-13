@@ -12,10 +12,11 @@ typedef struct ring_buffer{
 } ringbuffer_t;
 
 
-void    ring_buf_init(void);
-uint8_t ring_buf_get(void);
-void    ring_buf_put(const uint8_t c);
-uint8_t ring_buf_is_empty(void);
-uint8_t ring_buf_is_full(void);
+extern void    ring_buf_init(void);
+extern uint8_t ring_buf_get(void);
+extern void    ring_buf_put(const uint8_t c);
+extern uint8_t ring_buf_is_empty(void);
+extern uint8_t ring_buf_is_full(void);
+extern uint8_t ring_buf_get_char(void);
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef __SYSCALL_H__
 #define __SYSCALL_H__
 #include "orion_rtc.h"
+#include "ringbuffer.h"
 
 #define SYS_EXIT               0x0000
 #define SYS_SPAWN              0x0001
@@ -81,5 +82,6 @@
 #define SYS_SINC               0x004C
 #define SYS_LSEEK              0x004D
 #define SYS_IOCTL              0x004E
+#define SYS_GETKBDKEY          0x004F
 
 #endif

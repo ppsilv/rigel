@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include "ringbuffer.h"
 
-static uint8_t     buffer[RING_BUFFER_SIZE];
+//uint8_t     buffer[RING_BUFFER_SIZE];
+volatile uint8_t buffer[RING_BUFFER_SIZE] __attribute__((section(".bss")));
 static ringbuffer_t rb_static;
 static ringbuffer_t *rb = &rb_static;   // point at init time, not run time — no ordering bug possible
 

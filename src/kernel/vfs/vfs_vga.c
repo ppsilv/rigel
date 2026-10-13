@@ -2,11 +2,17 @@
  * vfs_vga.c -- dispositivo /dev/vcon: console de video + teclado.
  *
  *   write : escreve na VGA (PICO_VGA_BASE + 0x01), como o kernel_puts().
- *   read  : le' do ringbuffer (preenchido pela interrupcao do teclado),
- *           em modo linha com eco na VGA: devolve quando chega Enter,
- *           com o '\n' no fim. Backspace apaga o ultimo caractere.
+ *   read  : le' do ringbuffer (preenchido pela interrupcao do teclado).
  *
- * O read BLOQUEIA (espera ocupada) ate' o teclado mandar algo.
+ * Modos (TIOC_SETMODE, flags TTY_* do sys/vfs.h; o modo e' por descritor):
+ *   0            linha: espera Enter, eco na VGA, backspace edita; devolve a
+ *                linha com '\n' no fim.                        (padrao)
+ *   TTY_RAW      devolve assim que chega 1+ tecla, bytes sem tratamento
+ *                (inclusive '\r', 0x08 e sequencias ESC).
+ *   TTY_NOECHO   nao ecoa o que e' digitado (vale nos dois modos).
+ *   TTY_NONBLOCK so' com TTY_RAW: se nao ha tecla, read devolve 0 na hora.
+ *
+ * O read bloqueante espera em laco ocupado ate' o teclado mandar algo.
  */
 #include <stddef.h>
 #include <stdint.h>
@@ -19,7 +25,9 @@ extern uint8_t ring_buf_is_empty(void);
 extern uint8_t ring_buf_get(void);
 
 #define PICO_VGA_BASE     0x00FF8000UL
+#ifndef VGA_WRITE_SCREEN                /* (os testes no PC redefinem) */
 #define VGA_WRITE_SCREEN  (*((volatile uint8_t *)(PICO_VGA_BASE + 0x01)))
+#endif
 
 /* 1 = a VGA entende o backspace (0x08): o eco apaga o caractere na tela.
  * 0 = o caractere sai do buffer da linha, mas continua visivel na tela.   */
@@ -46,16 +54,35 @@ int vgacon_write(File *file, const void *buffer, size_t size)
 int vgacon_read(File *file, void *buffer, size_t size)
 {
     uint8_t *buf = (uint8_t *)buffer;
-    size_t n = 0;
-    (void)file;
+    size_t   n = 0;
+    uint32_t mode = (uint32_t)(uintptr_t)file->private_data;
+    int raw      = (mode & TTY_RAW) != 0;
+    int echo     = (mode & TTY_NOECHO) == 0;
+    int nonblock = raw && (mode & TTY_NONBLOCK) != 0;
+
+    kernel_puts("vgacon_read: \n");
 
     while (n < size) {
-        while (ring_buf_is_empty())
-            ;                                   /* espera uma tecla */
+    kernel_puts("vgacon_read: antes de ring_buf_is_empty\n");
+        if (ring_buf_is_empty()) {
+            if (raw && (n > 0 || nonblock))
+                break;                          /* modo cru: devolve o que ha' */
+            while (ring_buf_is_empty())
+                ;                               /* espera uma tecla */
+        }
+    kernel_puts("vgacon_read: depois de ring_buf_is_empty\n");
         uint8_t c = ring_buf_get();
 
+        if (raw) {
+            buf[n++] = c;
+            if (echo && c != '\r')
+                vga_put(c);
+            continue;
+        }
+
         if (c == '\r' || c == '\n') {           /* Enter: fecha a linha */
-            vga_put('\n');
+            if (echo)
+                vga_put('\n');
             buf[n++] = '\n';
             break;
         }
@@ -63,7 +90,7 @@ int vgacon_read(File *file, void *buffer, size_t size)
             if (n > 0) {
                 n--;
 #if VCON_BACKSPACE_OK
-                vga_put(0x08); vga_put(' '); vga_put(0x08);
+                if (echo) { vga_put(0x08); vga_put(' '); vga_put(0x08); }
 #endif
             }
             continue;
@@ -72,7 +99,8 @@ int vgacon_read(File *file, void *buffer, size_t size)
             continue;
 
         buf[n++] = c;
-        vga_put(c);                             /* eco */
+        if (echo)
+            vga_put(c);
     }
     return (int)n;
 }
@@ -85,11 +113,15 @@ int vgacon_close(File *file)
 
 int vgacon_ioctl(File *file, int cmd, void *arg)
 {
-    (void)file; (void)arg;
     switch (cmd) {
     case TIOC_CLEAR:
         kernel_puts("\033[2J\033[H");     /* mesma sequencia do tty_ioctl */
         return 0;
+    case TIOC_SETMODE:
+        file->private_data = (void *)(uintptr_t)((uint32_t)(uintptr_t)arg & (TTY_RAW | TTY_NOECHO | TTY_NONBLOCK));
+        return 0;
+    case TIOC_GETMODE:
+        return (int)(uint32_t)(uintptr_t)file->private_data;
     default:
         return -1;
     }

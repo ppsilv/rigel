@@ -2,16 +2,19 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-int isatty(int fd){
+int isatty(int fd)
+{
     return fd >= 0 && fd <= 2;          /* 0,1,2 = console */
 }
 
-int fstat(int fd, struct stat *st){
+int fstat(int fd, struct stat *st)
+{
     st->st_mode = (fd >= 0 && fd <= 2) ? S_IFCHR : S_IFREG;
     return 0;
 }
 
-int kill(int pid, int sig){
+int kill(int pid, int sig)
+{
     (void)pid; (void)sig;
     errno = EINVAL;
     return -1;
@@ -20,7 +23,8 @@ int kill(int pid, int sig){
 /* heap do app: cresce a partir de _end e para 1 KB antes da pilha da propria task */
 extern char _end;
 
-void *sbrk(int incr){
+void *sbrk(int incr)
+{
     static char *heap = 0;
     char *sp, *prev;
 

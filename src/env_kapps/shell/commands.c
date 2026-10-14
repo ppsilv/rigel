@@ -32,6 +32,7 @@ void do_load(int argc, char *argv[]){
        rigel_waitpid(pid);
        printf("filho %ld terminou\n", pid);
     }
+    
 /*
 O teste_spawn.c do pacote faz isso, lançando um hello.elf e esperando por ele.
 

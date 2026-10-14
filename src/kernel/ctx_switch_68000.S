@@ -18,6 +18,8 @@
 
 .extern systemTick
 .extern tick_count
+.extern tick_uptime
+.extern day_uptime
 
 OS_StartHighRdy:
     move.l  current_task,%A0       | %A0 = ponteiro pro TCB atual
@@ -43,12 +45,24 @@ OS_TickISR:
         move.l  #systemTick,%a0
         addq.l  #1,(%a0)
 
+        move.l  #tick_uptime,%a0
+        addq.l  #1,(%a0)
+        cmpi.l  #510000,tick_count
+        beq.s   .action_uptime
+        
+.continua:
         addq.w  #1,tick_count
         cmpi.w  #400,tick_count
         beq.s   .action_100
         cmpi.w  #800,tick_count
         beq.s   .action_200
         bra.s   .do_schedule
+
+.action_uptime:
+        move.l  #day_uptime,%a0
+        addq.l  #1,(%a0)
+        move.l  #0,tick_uptime
+        bra.s   .continua
 
 .action_100:
         move.b  #0x08,0xFF901D

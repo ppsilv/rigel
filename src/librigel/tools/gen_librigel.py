@@ -48,10 +48,10 @@ TABLE = [
   ("FSIZE",  "file", "size",   "long fd"),
   ("FEOF",   "file", "eof",    "long fd"),
   ("FSTAT",  "file", "stat",   "char *path, void *stat_buf"),
-  ("FOPENDIR",  "file", "opendir",  "char *path, void *dir"),
-  ("FREADDIR",  "file", "readdir",  "void *dir, void *file_info"),
+  ("FOPENDIR",  "file", "opendir",  "char *path"),
+  ("FREADDIR",  "file", "readdir",  "long dir, void *ent"),
   ("FMOUNT",    "file", "mount",    "char *path"),
-  ("FCLOSEDIR", "file", "closedir", "void *dir"),
+  ("FCLOSEDIR", "file", "closedir", "long dir"),
   ("FUNMOUNT",  "file", "unmount",  "char *path"),
   ("FFINDFIRST","file", "findfirst","void *dir, void *file_info, char *path, char *pattern"),
   ("FFINDNEXT", "file", "findnext", "void *dir, void *file_info"),
@@ -107,7 +107,8 @@ TABLE = [
   ("SETSOCKOPT", "net", "setsockopt", "long sockfd, long level, long optname, void *optval, long optlen"),
 
   ("GETKBDKEY", "proc", "getkbdkey",  "void"),
-
+  ("GETUPTIME", "proc", "getuptime",  "void"),  
+  
 ]
 
 # As duas familias de numeros para as mesmas operacoes (nova -> antiga)
@@ -202,6 +203,8 @@ def main():
     um += [f"#include <rigel/{g}.h>" for g in groups]
     if os.path.exists(os.path.join(inc, "tty.h")):
         um += ["#include <rigel/tty.h>"]
+    if os.path.exists(os.path.join(inc, "dirent.h")):
+        um += ["#include <rigel/dirent.h>"]
     um += ["#endif", ""]
     open(os.path.join(inc, "rigel.h"), "w").write("\n".join(um))
 

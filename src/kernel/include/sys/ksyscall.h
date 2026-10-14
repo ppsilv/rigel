@@ -85,4 +85,6 @@
 #define SYS_WAITPID            0x004F
 #define SYS_GETKBDKEY          0x0050
 
+#define SYS_GETUPTIME          0x1050
+
 #endif

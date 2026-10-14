@@ -8,19 +8,21 @@
 
 
 #define MAXARGS 40
-#define DEBUG_ELF 1
+//#define DEBUG_ELF 1
 
 void printerro(int eno);
 
 extern void do_help(int argc, char *argv[]);
 extern void do_load(int argc, char *argv[]);
+extern void do_dump(int argc, char *argv[]);
+extern void do_cat(int argc, char *argv[]);
+extern void do_uptime(int argc, char *argv[]);
+extern void do_ls(int argc, char *argv[]);
 
 const cmd_entry_t g_cmd_table[] = {
 //    {"cat",         1,  1, &do_cat,         "Display contents of <file>"},
 //    {"cd",          1,  1, &do_cd,          "Change directory <dir>"},
 //    {"cp",          2,  2, &do_copyfile,    "Copy file <src> <dest>"},
-//    {"dump",        2,  2, &do_dump,        "Dump memory <from> <count>" },
-//    {"exit",        0,  0, &do_exit,        "Exit system in a clean way.." },
 //    {"loadmem",	    1,  2, &do_loadmem,	    "Load a file to the specified memory location <file> <mem>" },
 //    {"ls",          0,  1, &do_ls,	        "List directory contents" },
 //    {"mkdir",	    1,  1, &do_mkdir_shel,	    "Create the specified folder <dir>" },
@@ -38,6 +40,10 @@ const cmd_entry_t g_cmd_table[] = {
 //    {"ascii",       0,  0, &do_ascii,       "Print hex code of keyboard key" },
 //    {"recv",        0,  0, &do_receiver,    "Receiver a file and save to disk" },
 
+    {"ls",          0,  1, &do_ls,	        "List directory contents" },
+    {"uptime",      0,  0, &do_uptime,      "Display the time the system has been running" },
+    {"cat",         1,  1, &do_cat,         "Display contents of <file>"},
+    {"dump",        2,  2, &do_dump,        "Dump memory <from> <count>" },
     {"load",	    0,  0, &do_load,	    "Load a fixed program hello.elf" },
     {"help",	    0,  0, &do_help,	    "Show available commands" },
 
@@ -94,10 +100,6 @@ void process_command(int argc, char *argv[])
 {
     if (argc > 0)
     {
-        printf("argc[%d]  ",argc);
-        for(int i=0;i < argc;i++){
-           printf("i[%d]--->%s | ",i,argv[i]);     
-        }
         if (process_command_builtin(argc, argv)){
             return;
         }else if (process_command_executable(argc, argv)){

@@ -10,12 +10,17 @@ AR        := $(CROSS)ar
 RIGELDIR  ?= $(HOME)/project/rigel/rigel
 SYSCALL_H ?= $(RIGELDIR)/src/kernel/include/sys/ksyscall.h
 VFS_H     ?= $(RIGELDIR)/src/kernel/include/sys/vfs.h
+DIRENT_H  ?= $(RIGELDIR)/src/kernel/include/sys/rigel_dirent.h
 FAMILY    ?= new      # new = SYS_OPEN/READ/WRITE...  old = SYS_FOPEN/FREAD/FWRITE... (a que o trap0.c trata)
 
 CFLAGS  := -m68000 -Os -Wall -ffreestanding -ffunction-sections -fdata-sections -Iinclude -I$(RIGELDIR)/include
 ASFLAGS := -m68000
 
-all: lib/librigel.a lib/crt0_app.o copy
+all: include/rigel/dirent.h lib/librigel.a lib/crt0_app.o copy
+
+# dirent.h vem do kernel (arquivo mestre) para kernel e apps terem o mesmo layout
+include/rigel/dirent.h: FORCE
+	cp $(DIRENT_H) $@
 
 # sempre regera: os numeros vem do syscall.h do kernel e nao podem ficar velhos
 libsrc/syscalls_gen.S: FORCE

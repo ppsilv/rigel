@@ -11,6 +11,10 @@
 
 FATFS FatFs; 
 
+uint32_t tick_uptime=0;
+uint32_t day_uptime=0;
+
+
 /*
  * Teste isolado: duas tarefas bobas, cada uma so incrementando um
  * contador proprio e imprimindo de vez em quando. Se elas alternarem

@@ -20,7 +20,7 @@ ASMS =  crt0.S ctx_switch_68000.S interrupts.S ./exceptions/exceptions_asm.S tra
 VASMS =
 
 # Lista de arquivos C (CORRIGIDO: não tinha um espaço)
-SRCS =  kernel.c kmalloc.c scheduler.c trap0.c ./syscall/trap_table.c  task_create.c ./mm/slots.c kfunctions.c \
+SRCS =  kernel.c kmalloc.c scheduler.c trap0.c ./syscall/trap_table.c  task_create.c ./mm/slots.c kfunctions.c fsdir.c \
 ./spawn/loader_elf.c \
 ./spawn/elf_reloc.c \
 ./spawn/spawn.c \

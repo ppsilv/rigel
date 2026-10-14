@@ -11,4 +11,5 @@
 #include <rigel/ppi.h>
 #include <rigel/net.h>
 #include <rigel/tty.h>
+#include <rigel/dirent.h>
 #endif

@@ -30,14 +30,22 @@ extern void kernel_puthex(uint32_t v);
 
 /* DIAGNOSTICO de spawn/exit/waitpid: escreve direto no VGA do kernel.
  * Depois de resolver, comente a linha abaixo. */
-#define TRAP_DIAG 1
+//#define TRAP_DIAG 1
 #ifdef TRAP_DIAG
 extern void kernel_puts(const char *s);
 extern void kernel_puthex(uint32_t v);
 #endif
 
+#include <sys/rigel_dirent.h>
+extern long sys_opendir(const char *path);              /* fsdir.c */
+extern long sys_readdir(long h, rigel_dirent_t *ent);
+extern long sys_closedir(long h);
 extern int sys_spawn(const char *path, char **argv);   /* spawn.c */
 extern int OS_TaskAlive(int id);                       /* scheduler.c */
+extern uint8_t ring_buf_get_char();
+
+extern uint32_t day_uptime;
+
 
 int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6, long a7)
 {
@@ -72,6 +80,14 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
         return r;
     }
     case SYS_CLOSE:
+#ifdef TRAP_DIAG
+        kernel_puts("\n[kernel] SYS_CLOSE fd="); kernel_puthex((uint32_t)a1); kernel_puts("\n");
+#endif
+        /* A tabela de fds e' GLOBAL (compartilhada por todas as tasks): quando um
+         * app termina, a newlib pode fechar 0/1/2 e derrubaria o stdio do shell.
+         * Ate' existir tabela por task, fd 0,1,2 nunca sao fechados. */
+        if ((int)a1 >= 0 && (int)a1 <= 2)
+            return 0;
         return vfs_close((int)a1);
     case SYS_IOCTL:
         return vfs_ioctl((int)a1, (int)a2, (void *)a3);
@@ -84,7 +100,8 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
 #ifdef TRAP_DIAG
         kernel_puts("\n[kernel] WAITPID pid="); kernel_puthex((uint32_t)a1); kernel_puts("\n");
 #endif
-        while (OS_TaskAlive((int)a1));    /* o tick preempta; o filho continua rodando */
+        while (OS_TaskAlive((int)a1))
+            ;                     /* o tick preempta; o filho continua rodando */
 #ifdef TRAP_DIAG
         kernel_puts("\n[kernel] WAITPID terminou\n");
 #endif
@@ -108,10 +125,10 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_FEOF: return -1;   /* TODO */
     case SYS_FRENAME: return -1;   /* TODO */
     case SYS_FSTAT: return -1;   /* TODO */
-    case SYS_FOPENDIR: return -1;   /* TODO */
-    case SYS_FREADDIR: return -1;   /* TODO */
+    case SYS_FOPENDIR: return sys_opendir((const char *)a1);   /* TODO */
+    case SYS_FREADDIR: return sys_readdir((long)a1, (rigel_dirent_t *)a2);   /* TODO */
     case SYS_FMOUNT: return -1;   /* TODO */
-    case SYS_FCLOSEDIR: return -1;   /* TODO */
+    case SYS_FCLOSEDIR: return sys_closedir((long)a1);   /* TODO */
     case SYS_FMKDIR: return -1;   /* TODO */
     case SYS_FUNMOUNT: return -1;   /* TODO */
     case SYS_FFINDFIRST: return -1;   /* TODO */
@@ -161,6 +178,10 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_READRTC: return -1;   /* TODO */
     case SYS_WRITERTC: return -1;   /* TODO */
     case SYS_SINC: return -1;   /* TODO */
+    case SYS_GETKBDKEY:
+            return ring_buf_get_char();
+    case SYS_GETUPTIME:
+            return day_uptime;
 
     default:
         return -1;                /* numero de syscall desconhecido */

@@ -24,10 +24,7 @@ long sys_size(long fd){}
 long sys_eof(long fd){}
 long sys_rename(char *old_path, char *new_path){}
 long sys_stat(char *path, void *stat_buf){}
-long sys_opendir(char *path, void *dir){}
-long sys_readdir(void *dir, void *file_info){}
 long sys_mount(char *path){}
-long sys_closedir(void *dir){}
 long sys_fmkdir(char *path){}
 long sys_unmount(char *path){}
 long sys_findfirst(void *dir, void *file_info, char *path, char *pattern){}

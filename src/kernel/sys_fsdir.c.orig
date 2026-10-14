@@ -1,0 +1,175 @@
+/*
+ * sys_fsdir.c -- diretorios do kernel Rigel.
+ *
+ *   SYS_FOPENDIR   long sys_opendir(const char *path)               -> handle ou -1
+ *   SYS_FREADDIR   long sys_readdir(long h, rigel_dirent_t *ent)    -> 1 entrada, 0 fim, -1 erro
+ *   SYS_FCLOSEDIR  long sys_closedir(long h)                        -> 0 ou -1
+ *   SYS_FFINDFIRST long sys_findfirst(path, pattern, ent)           -> handle (>=0) com 'ent' preenchido,
+ *                                                                      -2 nenhum arquivo casa, -1 erro
+ *   SYS_FFINDNEXT  long sys_findnext(long h, rigel_dirent_t *ent)   -> 1 entrada, 0 fim, -1 erro
+ *
+ * opendir e findfirst usam a MESMA tabela de handles; liberam com closedir.
+ * Quando uma task termina (SYS_EXIT), sys_dir_task_exit() fecha o que ela esqueceu aberto.
+ * O pattern do findfirst usa os curingas do FatFS: '?' e '*' (precisa de FF_USE_FIND=1).
+ */
+#include <stdint.h>
+#include <string.h>
+#include <fatfs/ff.h>
+#include <sys/scheduler.h>        /* current_task */
+#include <sys/rigel_dirent.h>
+/*
+MAX_DIRS =  4 é quantos diretórios podem estar abertos ao mesmo tempo, 
+            somando todas as tasks. Não limita quantos arquivos um 
+            diretório pode ter nem o tamanho do SD.
+
+#ifndef FF_USE_FIND
+#ifdef _USE_FIND
+#define FF_USE_FIND _USE_FIND
+#else
+#define FF_USE_FIND 0
+#endif
+#endif
+
+            Uso normal: o ls abre um, lê tudo e fecha. Sobram 3, então 4
+            está de sobra para o shell e alguns apps.
+            Quando pode faltar: se um app esquecer o closedir (ou travar 
+            no meio), o espaço fica ocupado para sempre, porque o kernel 
+            ainda não sabe de quem é cada handle. Depois de 4 vazamentos, 
+            nenhum ls abre mais.
+
+            Para aumentar, basta trocar o número no fsdir.c:
+#define MAX_DIRS 8
+            Cada espaço custa o tamanho de um DIR do FatFS (algumas dezenas 
+            de bytes) de RAM do kernel. Então 8 ou 16 não pesam nada no 
+            seu sistema.
+*/
+#define MAX_DIRS 4
+
+static DIR     dirs[MAX_DIRS];
+static uint8_t dir_used[MAX_DIRS];
+static int     dir_owner[MAX_DIRS];
+
+#ifdef __m68k__
+static inline uint16_t irq_off(void)
+{
+    uint16_t sr;
+    __asm__ volatile ("move.w %%sr,%0\n\tor.w #0x0700,%%sr" : "=d"(sr) : : "memory", "cc");
+    return sr;
+}
+static inline void irq_back(uint16_t sr) { __asm__ volatile ("move.w %0,%%sr" : : "d"(sr) : "memory", "cc"); }
+#else
+static inline uint16_t irq_off(void) { return 0; }
+static inline void irq_back(uint16_t sr) { (void)sr; }
+#endif
+
+static int cur_owner(void) { return current_task ? (int)current_task->id : 0; }
+
+static int dir_alloc(void)
+{
+    int h = -1;
+    uint16_t sr = irq_off();
+    for (int i = 0; i < MAX_DIRS; i++)
+        if (!dir_used[i]) { dir_used[i] = 1; dir_owner[i] = cur_owner(); h = i; break; }
+    irq_back(sr);
+    return h;
+}
+
+static void fill_ent(rigel_dirent_t *ent, const FILINFO *fno)
+{
+    ent->size = (uint32_t)fno->fsize;
+    ent->date = (uint16_t)fno->fdate;
+    ent->time = (uint16_t)fno->ftime;
+    ent->attr = (uint8_t)fno->fattrib;
+    strncpy(ent->name, fno->fname, RIGEL_NAME_MAX);
+    ent->name[RIGEL_NAME_MAX] = '\0';
+}
+
+static const char *norm_path(const char *path)
+{
+    return (path[0] == '.' && path[1] == '\0') ? "" : path;   /* "." = raiz/atual */
+}
+
+long sys_opendir(const char *path)
+{
+    if (path == NULL) return -1;
+    /* "." ou "" = raiz/diretorio atual do FatFS */
+    if (path[0] == '.' && path[1] == '\0') path = "";
+
+    int h = dir_alloc();
+    if (h < 0) return -1;
+    if (f_opendir(&dirs[h], norm_path(path)) != FR_OK) {
+        dir_used[h] = 0;
+        return -1;
+    }
+    return h;
+}
+
+long sys_readdir(long h, rigel_dirent_t *ent)
+{
+    FILINFO fno;                      /* local: cada task tem a sua */
+
+    if (h < 0 || h >= MAX_DIRS || !dir_used[h] || ent == NULL) return -1;
+
+    if (f_readdir(&dirs[h], &fno) != FR_OK) return -1;
+    if (fno.fname[0] == '\0') return 0;               /* fim do diretorio */
+    fill_ent(ent, &fno);
+    return 1;
+}
+
+long sys_closedir(long h)
+{
+    if (h < 0 || h >= MAX_DIRS || !dir_used[h]) return -1;
+    f_closedir(&dirs[h]);
+    dir_used[h] = 0;
+    return 0;
+}
+
+long sys_findfirst(const char *path, const char *pattern, rigel_dirent_t *ent)
+{
+#if FF_USE_FIND
+    FILINFO fno;
+    if (path == NULL || pattern == NULL || ent == NULL) return -1;
+    int h = dir_alloc();
+    if (h < 0) return -1;
+    if (f_findfirst(&dirs[h], &fno, norm_path(path), pattern) != FR_OK) {
+        dir_used[h] = 0;
+        return -1;
+    }
+    if (fno.fname[0] == '\0') {                       /* nenhum arquivo casa */
+        f_closedir(&dirs[h]);
+        dir_used[h] = 0;
+        return -2;
+    }
+    fill_ent(ent, &fno);
+    return h;
+#else
+    (void)path; (void)pattern; (void)ent;
+    return -1;                                        /* ligue FF_USE_FIND no ffconf.h */
+#endif
+}
+
+long sys_findnext(long h, rigel_dirent_t *ent)
+{
+#if FF_USE_FIND
+    FILINFO fno;
+    if (h < 0 || h >= MAX_DIRS || !dir_used[h] || ent == NULL) return -1;
+    if (f_findnext(&dirs[h], &fno) != FR_OK) return -1;
+    if (fno.fname[0] == '\0') return 0;               /* acabaram os arquivos */
+    fill_ent(ent, &fno);
+    return 1;
+#else
+    (void)h; (void)ent;
+    return -1;
+#endif
+}
+
+/* chamada no SYS_EXIT: fecha os diretorios que a task deixou abertos */
+void sys_dir_task_exit(int owner)
+{
+    for (int i = 0; i < MAX_DIRS; i++) {
+        if (dir_used[i] && dir_owner[i] == owner) {
+            f_closedir(&dirs[i]);
+            dir_used[i] = 0;
+        }
+    }
+}

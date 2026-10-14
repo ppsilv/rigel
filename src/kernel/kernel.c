@@ -115,14 +115,20 @@ O tipo de ELF: ET_EXEC, executável estático (não é ET_DYN/PIE).
 Ele é linkado no endereço 0 e guarda as relocações (-Wl,-q). 
 O loader soma a base do slot em cada R_68K_32.
 */
-
+void run_scheduler_test2(void)
+{
+    if (sys_spawn("/shell.elf", NULL) <= 0)
+        kprintf("Falha ao dar spawn no /shell.elf\n");
+    OS_Start();   /* so' agora entrega o controle pro scheduler */
+}
+/*
 void run_scheduler_test2(void)
 {
    // OS_TaskCreate(TaskA, NULL, stack_task_a, STACK_SIZE, 1);
    // OS_TaskCreate(TaskB, NULL, stack_task_b, STACK_SIZE, 2);
    // OS_TaskCreate(TaskA_Entry, NULL, stack_task_c, STACK_SIZE, 3);
 
-    /* teste do spawn via ELF */
+   // teste do spawn via ELF 
    
     FIL test_fd;
     if (f_open(&test_fd, "/shell.elf", FA_READ) == FR_OK) {
@@ -135,7 +141,7 @@ void run_scheduler_test2(void)
 
     OS_Start();   /* so' agora entrega o controle pro scheduler */
 }
-
+*/
 
 extern void run_scheduler_test(void);
 extern uint32_t __kernel_end;   /* símbolo do seu linker script, fim do .bss do kernel */

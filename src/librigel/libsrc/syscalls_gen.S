@@ -38,6 +38,13 @@
         SYSCALL rigel_unmount                0x0018   /* SYS_FUNMOUNT */
         SYSCALL rigel_findfirst              0x0019   /* SYS_FFINDFIRST */
         SYSCALL rigel_findnext               0x001A   /* SYS_FFINDNEXT */
+        SYSCALL rigel_ff_open                0x0004   /* SYS_FOPEN */
+        SYSCALL rigel_ff_close               0x0005   /* SYS_FCLOSE */
+        SYSCALL rigel_ff_read                0x0006   /* SYS_FREAD */
+        SYSCALL rigel_ff_write               0x0007   /* SYS_FWRITE */
+        SYSCALL rigel_ff_sync                0x0008   /* SYS_FSYNC */
+        SYSCALL rigel_ff_lseek               0x0009   /* SYS_FLSEEK */
+        SYSCALL rigel_ff_ioctl               0x000A   /* SYS_FIOCTL */
         SYSCALL rigel_vga_putchar            0x001B   /* SYS_VGAPUTCHAR */
         SYSCALL rigel_gotoxy                 0x001C   /* SYS_GOTOXY */
         SYSCALL rigel_gohome                 0x001D   /* SYS_GOHOME */

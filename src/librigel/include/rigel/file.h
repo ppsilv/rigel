@@ -19,8 +19,15 @@ long rigel_readdir(long dir, void *ent);
 long rigel_mount(char *path);
 long rigel_closedir(long dir);
 long rigel_unmount(char *path);
-long rigel_findfirst(void *dir, void *file_info, char *path, char *pattern);
-long rigel_findnext(void *dir, void *file_info);
+long rigel_findfirst(char *path, char *pattern, void *ent);
+long rigel_findnext(long dir, void *ent);
+long rigel_ff_open(char *path, long flags);
+long rigel_ff_close(long h);
+long rigel_ff_read(long h, void *buf, long size);
+long rigel_ff_write(long h, void *buf, long size);
+long rigel_ff_sync(long h);
+long rigel_ff_lseek(long h, long offset, long whence);
+long rigel_ff_ioctl(long h, long cmd, void *arg);
 
 #ifdef __cplusplus
 }

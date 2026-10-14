@@ -11,6 +11,7 @@
 #include <sys/vfs.h>
 #include <sys/ksyscall.h>
 #include <sys/scheduler.h>   /* OS_TaskExit(), current_task */
+#include "trap0.h"
 
 /*
  * Depuracao do SYS_WRITE: imprime na tela do KERNEL (VGA, via kernel_puts)
@@ -36,17 +37,6 @@ extern void kernel_puts(const char *s);
 extern void kernel_puthex(uint32_t v);
 #endif
 
-#include <sys/rigel_dirent.h>
-extern long sys_opendir(const char *path);              /* fsdir.c */
-extern long sys_readdir(long h, rigel_dirent_t *ent);
-extern long sys_closedir(long h);
-extern int sys_spawn(const char *path, char **argv);   /* spawn.c */
-extern int OS_TaskAlive(int id);                       /* scheduler.c */
-extern uint8_t ring_buf_get_char();
-
-extern uint32_t day_uptime;
-
-
 int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6, long a7)
 {
     (void)a4; (void)a5; (void)a6; (void)a7;
@@ -60,6 +50,10 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
         kernel_puthex(current_task ? (uint32_t)current_task->id : 0);
         kernel_puts("\n");
 #endif
+        if (current_task) {                       /* fecha arquivos/diretorios que a task deixou abertos */
+            sys_fs_task_exit((int)current_task->id);
+            sys_dir_task_exit((int)current_task->id);
+        }
         OS_TaskExit();            /* nao volta */
         return 0;
     case SYS_GETPID:
@@ -106,33 +100,36 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
         kernel_puts("\n[kernel] WAITPID terminou\n");
 #endif
         return 0;
+    case SYS_FOPENDIR: return sys_opendir((const char *)a1);
+    case SYS_FREADDIR: return sys_readdir((long)a1, (rigel_dirent_t *)a2);
+    case SYS_FCLOSEDIR: return sys_closedir((long)a1);
+    /* ---- arquivos FAT (familia SYS_F*, sys_fsfile.c / sys_fsdir.c) ---- */
+    case SYS_FOPEN:      return sys_fopen((const char *)a1, a2);
+    case SYS_FCLOSE:     return sys_fclose(a1);
+    case SYS_FREAD:      return sys_fread(a1, (void *)a2, (unsigned long)a3);
+    case SYS_FWRITE:     return sys_fwrite(a1, (const void *)a2, (unsigned long)a3);
+    case SYS_FSYNC:      return sys_fsync(a1);
+    case SYS_FLSEEK:     return sys_flseek(a1, a2, a3);
+    case SYS_FIOCTL:     return sys_fioctl(a1, a2, (void *)a3);
+    case SYS_FTELL:      return sys_ftell(a1);
+    case SYS_FSIZE:      return sys_fsize(a1);
+    case SYS_FEOF:       return sys_feof(a1);
+    case SYS_FUNLINK:    return sys_funlink((const char *)a1);
+    case SYS_FRENAME:    return sys_frename((const char *)a1, (const char *)a2);
+    case SYS_FSTAT:      return sys_fstat((const char *)a1, (rigel_dirent_t *)a2);
+    case SYS_FMKDIR:     return sys_fmkdir((const char *)a1);
+    case SYS_FMOUNT:     return sys_fmount((const char *)a1);
+    case SYS_FUNMOUNT:   return sys_funmount((const char *)a1);
+    case SYS_FFINDFIRST: return sys_findfirst((const char *)a1, (const char *)a2, (rigel_dirent_t *)a3);
+    case SYS_FFINDNEXT:  return sys_findnext(a1, (rigel_dirent_t *)a2);
+    case SYS_GETKBDKEY: return sys_getkey();
+    case SYS_GETUPTIME: return day_uptime;
 
     /* ---- TODO: ainda sem implementacao ---- */
     case SYS_SLEEP: return -1;   /* TODO */
     case SYS_YIELD: return -1;   /* TODO */
-    case SYS_FOPEN: return -1;   /* TODO */
-    case SYS_FCLOSE: return -1;   /* TODO */
-    case SYS_FREAD: return -1;   /* TODO */
-    case SYS_FWRITE: return -1;   /* TODO */
-    case SYS_FSYNC: return -1;   /* TODO */
-    case SYS_FLSEEK: return -1;   /* TODO */
-    case SYS_FIOCTL: return -1;   /* TODO */
-    case SYS_DUP: return -1;   /* TODO */
-    case SYS_FUNLINK: return -1;   /* TODO */
     case SYS_CHMOD: return -1;   /* TODO */
-    case SYS_FTELL: return -1;   /* TODO */
-    case SYS_FSIZE: return -1;   /* TODO */
-    case SYS_FEOF: return -1;   /* TODO */
-    case SYS_FRENAME: return -1;   /* TODO */
-    case SYS_FSTAT: return -1;   /* TODO */
-    case SYS_FOPENDIR: return sys_opendir((const char *)a1);   /* TODO */
-    case SYS_FREADDIR: return sys_readdir((long)a1, (rigel_dirent_t *)a2);   /* TODO */
-    case SYS_FMOUNT: return -1;   /* TODO */
-    case SYS_FCLOSEDIR: return sys_closedir((long)a1);   /* TODO */
-    case SYS_FMKDIR: return -1;   /* TODO */
-    case SYS_FUNMOUNT: return -1;   /* TODO */
-    case SYS_FFINDFIRST: return -1;   /* TODO */
-    case SYS_FFINDNEXT: return -1;   /* TODO */
+    case SYS_DUP: return -1;   /* TODO */
     case SYS_VGAPUTCHAR: return -1;   /* TODO */
     case SYS_GOTOXY: return -1;   /* TODO */
     case SYS_GOHOME: return -1;   /* TODO */
@@ -178,10 +175,6 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_READRTC: return -1;   /* TODO */
     case SYS_WRITERTC: return -1;   /* TODO */
     case SYS_SINC: return -1;   /* TODO */
-    case SYS_GETKBDKEY:
-            return ring_buf_get_char();
-    case SYS_GETUPTIME:
-            return day_uptime;
 
     default:
         return -1;                /* numero de syscall desconhecido */

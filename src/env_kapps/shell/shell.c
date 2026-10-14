@@ -10,6 +10,8 @@
 #define MAXARGS 40
 //#define DEBUG_ELF 1
 
+extern int process_command_executable( int argc, char *argv[]);
+
 void printerro(int eno);
 
 extern void do_help(int argc, char *argv[]);
@@ -49,10 +51,6 @@ const cmd_entry_t g_cmd_table[] = {
 
     {0, 0, 0, 0, 0 }
 };
-
-int process_command_executable( int argc, char *argv[]){
-    return 0;
-}
 
 int process_command_builtin( int argc, char *argv[]){
     const cmd_entry_t *cmd;

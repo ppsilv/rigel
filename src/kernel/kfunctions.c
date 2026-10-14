@@ -25,10 +25,7 @@ long sys_eof(long fd){}
 long sys_rename(char *old_path, char *new_path){}
 long sys_stat(char *path, void *stat_buf){}
 long sys_mount(char *path){}
-long sys_fmkdir(char *path){}
 long sys_unmount(char *path){}
-long sys_findfirst(void *dir, void *file_info, char *path, char *pattern){}
-long sys_findnext(void *dir, void *file_info){}
 
 /* picovga */
 long sys_vga_putchar(long c){}

@@ -53,8 +53,16 @@ TABLE = [
   ("FMOUNT",    "file", "mount",    "char *path"),
   ("FCLOSEDIR", "file", "closedir", "long dir"),
   ("FUNMOUNT",  "file", "unmount",  "char *path"),
-  ("FFINDFIRST","file", "findfirst","void *dir, void *file_info, char *path, char *pattern"),
-  ("FFINDNEXT", "file", "findnext", "void *dir, void *file_info"),
+  ("FFINDFIRST","file", "findfirst","char *path, char *pattern, void *ent"),
+  ("FFINDNEXT", "file", "findnext", "long dir, void *ent"),
+  # ---- arquivos FAT (familia SYS_F*; handles do FatFS, NAO sao fds do VFS) ----
+  ("FOPEN",  "file", "ff_open",  "char *path, long flags"),
+  ("FCLOSE", "file", "ff_close", "long h"),
+  ("FREAD",  "file", "ff_read",  "long h, void *buf, long size"),
+  ("FWRITE", "file", "ff_write", "long h, void *buf, long size"),
+  ("FSYNC",  "file", "ff_sync",  "long h"),
+  ("FLSEEK", "file", "ff_lseek", "long h, long offset, long whence"),
+  ("FIOCTL", "file", "ff_ioctl", "long h, long cmd, void *arg"),
   # ---- video ----
   ("VGAPUTCHAR", "vga", "vga_putchar", "long c"),
   ("GOTOXY",     "vga", "gotoxy",      "long x, long y"),
@@ -205,6 +213,8 @@ def main():
         um += ["#include <rigel/tty.h>"]
     if os.path.exists(os.path.join(inc, "dirent.h")):
         um += ["#include <rigel/dirent.h>"]
+    if os.path.exists(os.path.join(inc, "fsflags.h")):
+        um += ["#include <rigel/fsflags.h>"]
     um += ["#endif", ""]
     open(os.path.join(inc, "rigel.h"), "w").write("\n".join(um))
 

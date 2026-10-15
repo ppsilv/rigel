@@ -1,3 +1,5 @@
+#ifndef BUCETON
+
 #include <stdint.h>
 #include "sys/ksyscall.h"
 #include "fatfs/ff.h"
@@ -236,3 +238,5 @@ void rtc_write_time(rtc_time_t *wrtc) {
  char getkbdkey(){
     return do_trap1(SYS_GETKBDKEY);
  }
+
+#endif

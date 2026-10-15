@@ -39,6 +39,7 @@ SRCS =  kernel.c kmalloc.c scheduler.c trap0.c ./syscall/trap_table.c  task_crea
 ./vfs/vfs_vga.c \
 ./drivers/duart/duart.c \
 ./drivers/kbd/ringbuffer.c \
+./drivers/rtc/fattime.c \
 ./drivers/ide/ata.c \
 ./drivers/ide/diskio.c \
 ./drivers/fatfs/ff.c \

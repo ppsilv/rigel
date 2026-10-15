@@ -14,7 +14,7 @@ typedef struct {
 extern void rtc_read(RTC_Time *t);
 
 /* Função obrigatoriamente chamada pelo FatFs */
-DWORD get_fattime (void) {
+DWORD get_fattime1 (void) {
     RTC_Time t;
     
     rtc_read(&t);

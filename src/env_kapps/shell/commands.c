@@ -23,7 +23,8 @@ void do_help(int argc, char *argv[])
 	}
 }
 
-void do_load(int argc, char *argv[]){
+//__attribute__((used, retain)) 
+__attribute__((used)) void do_load(int argc, char *argv[]){
 //No shell, use assim:
     char *args[] = { "hello.elf", "ola", "mundo", NULL };
     long pid = rigel_spawn("hello.elf", args);

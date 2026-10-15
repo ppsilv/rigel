@@ -16,7 +16,6 @@ extern "C" {
 #include <sys/_types.h>
 
 #define _NULL 0
-typedef unsigned long _mbstate_t;
 
 #ifndef __Long
 #if __LONG_MAX__ == 2147483647L
@@ -198,7 +197,7 @@ struct __sFILE {
 #ifndef __SINGLE_THREAD__
   _flock_t _lock;	/* for thread-safety locking */
 #endif
- _mbstate_t _mbstate;	/* for wide char stdio functions. */
+  _mbstate_t _mbstate;	/* for wide char stdio functions. */
   int   _flags2;        /* for future use */
 };
 

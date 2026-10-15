@@ -6,7 +6,7 @@ SIZE    := $(CROSS)size
 
 
 CPU     ?= -m68000
-CFLAGS  := $(CPU) -Wall -Os -ffreestanding -fomit-frame-pointer -ffunction-sections -fdata-sections \
+CFLAGS  := $(CPU) -Wall -Os -ffreestanding -fomit-frame-pointer -ffunction-sections -fdata-sections -include lixo/fix_winnt.h\
 -I $(RIGELDIR)/include \
 -I $(RIGELDIR)/src/kernel/include \
 -I $(RIGELDIR)/src/librigel/include \
@@ -17,7 +17,7 @@ LINKER_FILE := $(RIGELDIR)/src/librigel/lib/app.ld
 
 CRT0_FILE   := $(RIGELDIR)/src/librigel/lib/crt0_app.o
 
-LDFLAGS := $(CPU) -Wl,-q -T $(LINKER_FILE) -nostartfiles -Wl,--gc-sections -Wl,-Map=rigel.map
+LDFLAGS := $(CPU) -Wl,-q -T $(LINKER_FILE) -nostartfiles -Wl,--gc-sections -Wl,-Map=rigel.map  -Wl,--undefined=do_load
 LDLIBS  := -L$(RIGELDIR)/lib -L$(RIGELDIR)/lib/rigel -Wl,--start-group -lrigel -lc -lgcc -Wl,--end-group
 
 SRCS = $(wildcard *.c)

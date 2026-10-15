@@ -14,7 +14,7 @@ DIRENT_H  ?= $(RIGELDIR)/src/kernel/include/sys/rigel_dirent.h
 FSFLAGS_H ?= $(RIGELDIR)/src/kernel/include/sys/rigel_fsflags.h
 FAMILY    ?= new      # new = SYS_OPEN/READ/WRITE...  old = SYS_FOPEN/FREAD/FWRITE... (a que o trap0.c trata)
 
-CFLAGS  := -m68000 -Os -Wall -ffreestanding -ffunction-sections -fdata-sections -Iinclude -I$(RIGELDIR)/include
+CFLAGS  := -m68000 -Os -Wall -ffreestanding -ffunction-sections -fdata-sections -Iinclude -I$(RIGELDIR)/include -include lixo/fix_winnt.h
 ASFLAGS := -m68000
 
 all: include/rigel/fsflags.h include/rigel/dirent.h lib/librigel.a lib/crt0_app.o copy

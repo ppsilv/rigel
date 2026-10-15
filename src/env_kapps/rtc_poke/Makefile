@@ -15,7 +15,7 @@ CC    := $(CROSS)gcc
 # librigel/include vem ANTES (headers gerados, os atuais)
 CFLAGS  := -m68000 -Wall -Os -ffreestanding -fomit-frame-pointer \
            -ffunction-sections -fdata-sections \
-           -I $(LIBRIGEL)/include -I$(RIGELDIR)/include
+           -I $(LIBRIGEL)/include -I$(RIGELDIR)/include -include lixo/fix_winnt.h
 
 # -Wl,-q = guarda as relocacoes (o loader do kernel precisa delas)
 # NAO use -s / strip no .elf

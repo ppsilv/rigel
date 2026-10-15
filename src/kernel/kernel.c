@@ -109,6 +109,7 @@ void run_scheduler_test(void)
     /* nunca chega aqui */
 }
 extern int load_pic_elf_standalone(FIL *fd, int argc, char *argv[]);
+extern int sys_spawn(const char *path, char **argv);
 
 /*
 O tipo de ELF: ET_EXEC, executável estático (não é ET_DYN/PIE). 
@@ -139,7 +140,7 @@ void run_scheduler_test2(void)
         kprintf("Nao achei /shell.elf no disco\n");
     }
 
-    OS_Start();   /* so' agora entrega o controle pro scheduler */
+    OS_Start();   // so' agora entrega o controle pro scheduler 
 }
 */
 

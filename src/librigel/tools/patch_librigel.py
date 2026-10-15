@@ -2,7 +2,7 @@
 """
 patch_librigel.py -- ajusta a SUA librigel (sem apagar o que voce acrescentou) para as syscalls de arquivo.
 
-Uso:   python3 patch_librigel.py /caminho/para/src/librigel
+Uso:   python3 patch_librigel.py /home/pdsilva/project/rigel/rigel/src/librigel
 
 Faz (e pode rodar mais de uma vez, ele nao duplica nada):
   1. tools/gen_librigel.py : troca as linhas FFINDFIRST/FFINDNEXT pelas novas e acrescenta

@@ -22,6 +22,7 @@
  *   SYS_FRENAME sys_frename(old, new)            0
  *   SYS_FSTAT   sys_fstat(path, ent)             0   (preenche rigel_dirent_t)
  *   SYS_FMKDIR  sys_fmkdir(path)                 0
+ *   SYS_CHMOD   sys_chmod(path, attrs)           0   (attrs = RIGEL_ATTR_RDO|HID|SYS|ARC; precisa FF_USE_CHMOD=1)
  *   SYS_FMOUNT  sys_fmount(path)                 0   ("0:", "1:"...; monta/remonta o volume)
  *   SYS_FUNMOUNT sys_funmount(path)              0   (o volume 0 = boot nao pode ser desmontado)
  */
@@ -41,6 +42,13 @@
 #endif
 #ifndef FF_VOLUMES
 #define FF_VOLUMES _VOLUMES
+#endif
+#ifndef FF_USE_CHMOD
+#ifdef _USE_CHMOD
+#define FF_USE_CHMOD _USE_CHMOD
+#else
+#define FF_USE_CHMOD 0
+#endif
 #endif
 
 /* o layout dos flags do app tem que ser o do FatFS */
@@ -222,6 +230,20 @@ long sys_fstat(const char *path, rigel_dirent_t *ent)
     return 0;
 #else
     (void)path; (void)ent; return -1;
+#endif
+}
+
+/* troca os atributos (somente-leitura, oculto, sistema, arquivo) de um arquivo/diretorio.
+ * 'attrs' = os bits que o arquivo deve ficar tendo; os 4 bits sao sempre todos substituidos. */
+long sys_chmod(const char *path, long attrs)
+{
+#if FF_USE_CHMOD && !FF_FS_READONLY && FF_FS_MINIMIZE == 0
+    const BYTE all = AM_RDO | AM_HID | AM_SYS | AM_ARC;
+    if (path == NULL) return -1;
+    return (f_chmod(path, (BYTE)(attrs & all), all) == FR_OK) ? 0 : -1;
+#else
+    (void)path; (void)attrs;
+    return -1;                       /* ligue FF_USE_CHMOD no ffconf.h */
 #endif
 }
 

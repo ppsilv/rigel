@@ -33,8 +33,8 @@ int main(void)
 
     h = rigel_ff_open("/ftest.txt", RIGEL_FA_READ);
     check("ff_open (ler)", h, h >= 0);
-    r = rigel_ff_lseek(h, 5, RIGEL_SEEK_SET);
-    check("lseek SET 5", r, r == 5);
+    r = rigel_ff_lseek(h, 4, RIGEL_SEEK_SET);
+    check("lseek SET 4", r, r == 4);
     memset(buf, 0, sizeof buf);
     r = rigel_ff_read(h, buf, 5);
     check("ff_read 5", r, r == 5 && memcmp(buf, "Rigel", 5) == 0);

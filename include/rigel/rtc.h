@@ -8,8 +8,8 @@ extern "C" {
 
 long rigel_readtime(void *tm_out);
 long rigel_writetime(void *tm_in);
-long rigel_readrtc(void *rtc);
-long rigel_writertc(void *rtc);
+long rigel_readrtc(void);
+long rigel_writertc(long ts);
 
 #ifdef __cplusplus
 }

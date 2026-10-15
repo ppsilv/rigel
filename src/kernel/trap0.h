@@ -25,6 +25,11 @@ extern long sys_funlink(const char *path);
 extern long sys_frename(const char *oldp, const char *newp);
 extern long sys_fstat(const char *path, rigel_dirent_t *ent);
 extern long sys_fmkdir(const char *path);
+extern long sys_chmod(const char *path, long attrs);
+
+/* sys_proc.c */
+extern long sys_sleep(long ms);
+extern long sys_yield(void);
 extern long sys_fmount(const char *path);
 extern long sys_funmount(const char *path);
 extern void sys_fs_task_exit(int owner);
@@ -34,5 +39,10 @@ extern int OS_TaskAlive(int id);                       /* scheduler.c */
 extern uint8_t sys_getkey();
 
 extern uint32_t day_uptime;
+extern void sys_setramvector(long stub_addr, long handler_addr);
+
+/* sys_fsrtc.c: RTC DS1307 via Pico */
+extern long sys_readrtc(void);
+extern long sys_writertc(long rtc);
 
 #endif

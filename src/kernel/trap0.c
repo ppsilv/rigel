@@ -87,7 +87,6 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
         return vfs_ioctl((int)a1, (int)a2, (void *)a3);
     case SYS_LSEEK:
         return vfs_lseek((int)a1, (uint32_t)a2, (int)a3);
-
     case SYS_SPAWN:
         return sys_spawn((const char *)a1, (char **)a2);
     case SYS_WAITPID:
@@ -124,11 +123,14 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_FFINDNEXT:  return sys_findnext(a1, (rigel_dirent_t *)a2);
     case SYS_GETKBDKEY: return sys_getkey();
     case SYS_GETUPTIME: return day_uptime;
+    case SYS_SLEEP:     return sys_sleep(a1);      /* a1 = milissegundos */
+    case SYS_YIELD:     return sys_yield();
+    case SYS_CHMOD:     return sys_chmod((const char *)a1, a2);
+    case SYS_SETRAMVECTOR:
+        sys_setramvector((long)a1, (long)a2);
+        return 0;
 
     /* ---- TODO: ainda sem implementacao ---- */
-    case SYS_SLEEP: return -1;   /* TODO */
-    case SYS_YIELD: return -1;   /* TODO */
-    case SYS_CHMOD: return -1;   /* TODO */
     case SYS_DUP: return -1;   /* TODO */
     case SYS_VGAPUTCHAR: return -1;   /* TODO */
     case SYS_GOTOXY: return -1;   /* TODO */
@@ -171,9 +173,8 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_LISTEN: return -1;   /* TODO */
     case SYS_ACCEPT: return -1;   /* TODO */
     case SYS_SETSOCKOPT: return -1;   /* TODO */
-    case SYS_SETRAMVECTOR: return -1;   /* TODO */
-    case SYS_READRTC: return -1;   /* TODO */
-    case SYS_WRITERTC: return -1;   /* TODO */
+    case SYS_READRTC:  return sys_readrtc();
+    case SYS_WRITERTC: return sys_writertc(a1);
     case SYS_SINC: return -1;   /* TODO */
 
     default:

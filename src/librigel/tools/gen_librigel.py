@@ -82,8 +82,8 @@ TABLE = [
   # ---- relogio ----
   ("READTIME",  "rtc", "readtime",  "void *tm_out"),
   ("WRITETIME", "rtc", "writetime", "void *tm_in"),
-  ("READRTC",   "rtc", "readrtc",   "void *rtc"),      # ASSINATURA SUPOSTA: confira
-  ("WRITERTC",  "rtc", "writertc",  "void *rtc"),      # ASSINATURA SUPOSTA: confira
+  ("READRTC", "rtc", "readrtc", "void"),      # ASSINATURA SUPOSTA: confira
+  ("WRITERTC", "rtc", "writertc", "long ts"),      # ASSINATURA SUPOSTA: confira
   # ---- eeprom ----
   ("EEPROMREADBYTE",  "eeprom", "eeprom_readbyte",  "long addr"),
   ("EEPROMWRITEBYTE", "eeprom", "eeprom_writebyte", "long addr, long value"),

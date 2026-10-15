@@ -5,8 +5,6 @@
 #include <sys/scheduler.h>
 
 long sys_exit(long code){}
-long sys_sleep(long ticks){}
-long sys_yield(void){}
 
 /* arquivo / vfs */
 long sys_open(char *path, long flags){}
@@ -18,7 +16,6 @@ long sys_lseek(long fd, long offset, long whence){}
 long sys_ioctl(long fd, long cmd, void *arg){}
 long sys_dup(long fd_old, long fd_new){}
 long sys_unlink(char *path){}
-long sys_chmod(char *path, long attrs){}
 long sys_tell(long fd){}
 long sys_size(long fd){}
 long sys_eof(long fd){}
@@ -84,15 +81,3 @@ long sys_setsockopt(long sockfd, long level, long optname, void *optval, long op
 long sys_getpid(void){}
 
 
-void sys_setramvector(uint32_t stub_addr, uint32_t handler_addr)
-{
-    uint8_t *p = (uint8_t *) stub_addr;
-
-    *p++ = 0x4E;
-    *p++ = 0xF9;   /* JMP absoluto de 32 bits */
-
-    *p++ = (uint8_t)((handler_addr >> 24) & 0xFF);
-    *p++ = (uint8_t)((handler_addr >> 16) & 0xFF);
-    *p++ = (uint8_t)((handler_addr >> 8)  & 0xFF);
-    *p++ = (uint8_t)( handler_addr        & 0xFF);
-}

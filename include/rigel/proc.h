@@ -11,7 +11,6 @@ long rigel_waitpid(long pid);
 long rigel_sleep(long ticks);
 long rigel_yield(void);
 long rigel_setramvector(long stub_addr, long handler_addr);
-long rigel_getkbdkey(void);
 long rigel_getuptime(void);
 
 #ifdef __cplusplus

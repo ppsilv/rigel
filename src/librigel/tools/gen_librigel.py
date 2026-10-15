@@ -114,7 +114,7 @@ TABLE = [
   ("ACCEPT",     "net", "accept",     "long sockfd, void *addr, long *addrlen"),
   ("SETSOCKOPT", "net", "setsockopt", "long sockfd, long level, long optname, void *optval, long optlen"),
 
-  ("GETKBDKEY", "proc", "getkbdkey",  "void"),
+  ("GETKBDKEY", "kbd", "getkbdkey",  "void"),
   ("GETUPTIME", "proc", "getuptime",  "void"),  
   
 ]

@@ -10,6 +10,7 @@
 #include <rigel/duart.h>
 #include <rigel/ppi.h>
 #include <rigel/net.h>
+#include <rigel/kbd.h>
 #include <rigel/tty.h>
 #include <rigel/dirent.h>
 #include <rigel/fsflags.h>

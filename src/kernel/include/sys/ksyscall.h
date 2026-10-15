@@ -87,4 +87,21 @@
 
 #define SYS_GETUPTIME          0x1050
 
+//VGA syscalls
+#define SYS_GOTOXY              0x1100
+#define SYS_CLRSCR              0x1101
+#define SYS_SETTEXTCOLOR        0x1102
+#define SYS_DRAWVLINE           0x1103
+#define SYS_DRAWHLINE           0x1104
+#define SYS_DRAWLINE            0x1105
+#define SYS_DRAWCIRCLE          0x1106
+#define SYS_DRAWCIRCLEHELPER    0x1107
+#define SYS_FILLCIRCLE          0x1108
+#define SYS_FILLCIRCLEHELPER    0x1109
+#define SYS_DRAWROUNDRECT       0x110A
+#define SYS_FILLROUNDRECT       0x110B
+#define SYS_FILLRECT            0x110C
+
+
+
 #endif

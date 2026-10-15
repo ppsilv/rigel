@@ -129,24 +129,28 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_SETRAMVECTOR:
         sys_setramvector((long)a1, (long)a2);
         return 0;
+    case SYS_GOTOXY:    sys_gotoxy((long)a1, (long)a2);
+                        return 0;
+    case SYS_CLRSCR:    sys_clrscr();
+                        return 0;
+    case SYS_SETTEXTCOLOR: sys_settextcolor((long)a1, (long)a2);
+                        return 0; 
+    case SYS_GOHOME:    sys_gohome(); 
+                        return 0;
+    case SYS_DRAWVLINE:  return -1;
+    case SYS_DRAWHLINE:  return -1;
+    case SYS_DRAWLINE:   return -1;
+    case SYS_DRAWCIRCLE: return -1;
+    case SYS_DRAWCIRCLEHELPER: return -1;
+    case SYS_FILLCIRCLE:       return -1;
+    case SYS_FILLCIRCLEHELPER: return -1;
+    case SYS_DRAWROUNDRECT:    return -1;
+    case SYS_FILLROUNDRECT:    return -1;
+    case SYS_FILLRECT:         return -1;
 
     /* ---- TODO: ainda sem implementacao ---- */
+    case SYS_VGAPUTCHAR: return -1;
     case SYS_DUP: return -1;   /* TODO */
-    case SYS_VGAPUTCHAR: return -1;   /* TODO */
-    case SYS_GOTOXY: return -1;   /* TODO */
-    case SYS_GOHOME: return -1;   /* TODO */
-    case SYS_SETTEXTCOLOR: return -1;   /* TODO */
-    case SYS_CLRSCR: return -1;   /* TODO */
-    case SYS_DRAWVLINE: return -1;   /* TODO */
-    case SYS_DRAWHLINE: return -1;   /* TODO */
-    case SYS_DRAWLINE: return -1;   /* TODO */
-    case SYS_DRAWCIRCLE: return -1;   /* TODO */
-    case SYS_DRAWCIRCLEHELPER: return -1;   /* TODO */
-    case SYS_FILLCIRCLE: return -1;   /* TODO */
-    case SYS_FILLCIRCLEHELPER: return -1;   /* TODO */
-    case SYS_DRAWROUNDRECT: return -1;   /* TODO */
-    case SYS_FILLROUNDRECT: return -1;   /* TODO */
-    case SYS_FILLRECT: return -1;   /* TODO */
     case SYS_READTIME: return -1;   /* TODO */
     case SYS_WRITETIME: return -1;   /* TODO */
     case SYS_EEPROMREADBYTE: return -1;   /* TODO */

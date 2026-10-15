@@ -45,4 +45,21 @@ extern void sys_setramvector(long stub_addr, long handler_addr);
 extern long sys_readrtc(void);
 extern long sys_writertc(long rtc);
 
+/*VGA*/
+extern long sys_vga_putchar(long c);
+extern long sys_gotoxy(long x, long y);
+extern long sys_gohome(void);
+extern long sys_settextcolor(long a1, long a2);
+extern long sys_clrscr(void);
+extern long sys_drawvline(long x, long y, long h, long color);
+extern long sys_drawhline(long x, long y, long w, long color);
+extern long sys_drawline(long x0, long y0, long x1, long y1, long color);
+extern long sys_drawcircle(long x0, long y0, long r, long color);
+extern long sys_drawcirclehelper(long x0, long y0, long r, long cornername, long color);
+extern long sys_fillcircle(long x0, long y0, long r, long color);
+extern long sys_fillcirclehelper(long x0, long y0, long r, long cornername, long delta, long color);
+extern long sys_drawroundrect(long x, long y, long w, long h, long r, long color);
+extern long sys_fillroundrect(long x, long y, long w, long h, long r, long color);
+extern long sys_fillrect(long x, long y, long w, long h, long color);
+
 #endif

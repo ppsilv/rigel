@@ -1,0 +1,425 @@
+
+.section .text
+.align 2
+
+.global sys_writechar
+.global sys_gotoxy
+.global sys_clrscr
+.global sys_setcolor
+.global sys_gohome
+
+.global sys_drawHLine
+.global sys_drawVLine
+.global sys_drawLine
+.global sys_drawCircle
+.global sys_drawCircleHelper
+.global sys_fillCircle
+.global sys_fillCircleHelper
+.global sys_drawRoundRect
+.global sys_fillRoundRect
+.global sys_fillRect
+.global sys_fillTri
+
+
+.equ PICO_VGA_BASE, 0x00FF8000
+| REGISTRADORES
+.equ REG_DATA_OUT,       0x01
+.equ REG_CHANGE_CUR_POS, 0x2B
+.equ REG_RUN_CMD       , 0x3D
+.equ REG_SET_TXT_COLOR , 0x29
+
+.equ REG_X1_HIGH,           ((0x03 * 2)+1)
+.equ REG_X1_LOW,            ((0x04 * 2)+1)
+.equ REG_Y1_HIGH,           ((0x05 * 2)+1)
+.equ REG_Y1_LOW,            ((0x06 * 2)+1)
+.equ REG_X2_HIGH,           ((0x07 * 2)+1)
+.equ REG_X2_LOW,            ((0x08 * 2)+1)
+.equ REG_Y2_HIGH,           ((0x09 * 2)+1)
+.equ REG_Y2_LOW,            ((0x0A * 2)+1)
+.equ REG_PRIMITIVE_COLOR,   ((0x0E * 2)+1)
+.equ REG_WIDTH_HIGH,        ((0x0F * 2)+1)
+.equ REG_WIDTH_LOW,         ((0x10 * 2)+1)
+.equ REG_HEIGHT_HIGH,       ((0x11 * 2)+1)
+.equ REG_HEIGHT_LOW,        ((0x12 * 2)+1)
+.equ REG_RAIO,              ((0x13 * 2)+1)  
+.equ REG_X_HIGH,            ((0x16 * 2)+1)
+.equ REG_X_LOW,             ((0x17 * 2)+1)
+.equ REG_Y_HIGH,            ((0x18 * 2)+1)
+.equ REG_Y_LOW,             ((0x19 * 2)+1)
+.equ REG_CORNERNAME,        ((0x1A * 2)+1)    
+.equ REG_DELTA,             ((0x1B * 2)+1)    
+
+
+
+| COMMANDS
+.equ CMD_SYSTEM_ENABLE,        0xA5
+.equ CMD_CLEAR_SCREEN ,        0xA4
+.equ CMD_SET_CUR_POS  ,        0xA3
+.equ CMD_SET_TXT_COLOR,        0xA2
+.equ CMD_GO_HOME      ,        0xA1
+.equ CMD_DRAW_PIXEL,           0xA0
+.equ CMD_DRAW_LINE,            0xBF
+.equ CMD_DRAW_VLINE,           0xBE
+.equ CMD_DRAW_HLINE,           0xBD
+.equ CMD_DRAW_CIRCLE,          0xBC
+.equ CMD_DRAW_CIRCLEHELPER,    0xBB
+.equ CMD_DRAW_FILLCIRCLE,      0xBA
+.equ CMD_DRAW_FILLCIRCLEHELPER,0xB9
+.equ CMD_DRAW_ROUNDRECT,       0xB8
+.equ CMD_DRAW_FILLROUNDRECT,   0xB7
+.equ CMD_DRAW_FILLRECT,        0xB6
+.equ CMD_DRAW_FILLTRIANGLE,    0xB5
+.equ CMD_DRAW_MULTILINE,       0xB4
+
+ /* =========================================================================
+ * 1. writechar VGA: 1 argments D0 = char 
+ * Regs used: A0 and D0 
+ * APARENTEMENTE QUANDO COMECEI A USAR ESSA FUNÇÃO PARA POR NO CCONOUT
+ * COMECEI A TER CARACTERE DUPLICADO NA TELA VOU VOLTAR PARA picovga_putchar
+ * E SONDAR SE O PROBLEMA CONTINUA.
+ * APARENTEMENTE ESTAVA ESCREVENDO 2 VEZES NO VIDEO TÃO RÁPIDO QUE NA MAIORIA
+ * DAS VEZES SÓ SAIA UM CARACTERE. SONDAR!!!
+ * ========================================================================= */
+sys_writechar:
+    /* Opção 1: Registrador A0 com Offset d16(An) - RECOMENDADO */
+ /*   |movea.l #PICO_VGA_BASE, %a0                                  */
+ /*   |move.b  %D0, REG_DATA_OUT(%a0)      | Escreve em 0x00FF8001  */
+    bra     sys_exit
+
+/* =========================================================================
+ * 1. sys_gotoxy VGA: 2 argments D0 = cursor X D2 = cursor Y int16_T 
+ * Regs used: A0,D0,D2 
+ * ========================================================================= */
+sys_gotoxy:
+    movea.l #PICO_VGA_BASE, %a0
+    move.b %d0, REG_X_LOW(%A0)                      | Salva os 8 bits inferiores primeiro
+    lsr.w  #8, %d0                                  | Desloca D0 8 bits para a direita
+    move.b %d0, REG_X_HIGH(%A0)                     | Salva o próximo byte
+    move.b %d2, REG_Y_LOW(%A0)                      | Salva os 8 bits inferiores primeiro
+    lsr.w  #8, %d2                                  | Desloca D0 8 bits para a direita
+    move.b %d2, REG_Y_HIGH(%A0)                     | Salva o próximo byte
+    move.b  #CMD_SET_CUR_POS,REG_RUN_CMD(%A0)          | Muda o cursor de posição
+    bra     sys_exit
+
+/* =========================================================================
+ * 1. sys_clrscr VGA: No argument
+ * Regs used: A0
+ * ========================================================================= */
+sys_clrscr:
+    movea.l #PICO_VGA_BASE, %a0
+    move.b  #CMD_CLEAR_SCREEN,REG_RUN_CMD(%A0)          | Limpa a tela
+    bra     sys_exit
+
+sys_gohome:
+    movea.l #PICO_VGA_BASE, %a0
+    move.b  #CMD_GO_HOME,REG_RUN_CMD(%A0)          
+    bra     sys_exit
+
+/* =========================================================================
+ * 1. sys_setcolor VGA: D0.B = Nible High = char color Nible Low = Back ground color
+ * Regs used: A0, D0
+ * ========================================================================= */
+sys_setcolor:
+    movea.l #PICO_VGA_BASE, %a0
+    move.b  %D0,REG_SET_TXT_COLOR(%A0)          
+    bra     sys_exit
+
+/* =========================================================================
+ * 1. sys_drawVLine
+ * Regs used: DO=COLOR,D1=FUNCTION - D2=X,D3=Y,D4=H
+ void drawVLine(short x, short y, short h, char color);
+ * ========================================================================= */
+sys_drawVLine:
+    movea.l #PICO_VGA_BASE, %a0
+
+    move.b %d0, REG_PRIMITIVE_COLOR(%A0)            | COLOR
+
+    move.b %d2, REG_X_LOW(%A0)                      | X LOW
+    lsr.w  #8, %d2                                  | 
+    move.b %d2, REG_X_HIGH(%A0)                     | X HIGH
+    move.b %d3, REG_Y_LOW(%A0)                      | Y LOW
+    lsr.w  #8, %d3                                  | 
+    move.b %d3, REG_Y_HIGH(%A0)                     | Y HIGH
+
+    move.b %d4, REG_HEIGHT_LOW(%A0)                      | H LOW
+    lsr.w  #8, %d4                                  | 
+    move.b %d4, REG_HEIGHT_HIGH(%A0)                     | H HIGH
+
+
+    move.b #CMD_DRAW_VLINE,REG_RUN_CMD(%A0)
+
+    bra     sys_exit
+/* =========================================================================
+ * 2. sys_drawHLine
+ * Regs used: DO=COLOR,D1=FUNCTION,D2=X,D3=Y,D4=W(4 PARAMETERS)
+void drawHLine(int x, int y, int w, color_t color);
+ * ========================================================================= */
+sys_drawHLine:
+    movea.l #PICO_VGA_BASE, %a0
+
+    move.b %d0, REG_PRIMITIVE_COLOR(%A0)            | COLOR
+
+    move.b %d2, REG_X_LOW(%A0)                      | X LOW
+    lsr.w  #8, %d2                                  | 
+    move.b %d2, REG_X_HIGH(%A0)                     | X HIGH
+
+    move.b %d3, REG_Y_LOW(%A0)                      | Y LOW
+    lsr.w  #8, %d3                                  | 
+    move.b %d3, REG_Y_HIGH(%A0)                     | Y HIGH
+
+    move.b %d4, REG_WIDTH_LOW(%A0)                      | W LOW
+    lsr.w  #8, %d4                                  | 
+    move.b %d4, REG_WIDTH_HIGH(%A0)                     | W HIGH
+
+
+    move.b #CMD_DRAW_HLINE,REG_RUN_CMD(%A0)
+    bra     sys_exit
+/* =========================================================================
+ * 3.sys_drawLine
+ * Regs used: DO=COLOR,D1=FUNCTION,D2=X0,D3=Y0,D4=X1,D5=Y1(5 PARAMETERS)
+void drawLine(short x0, short y0, short x1, short y1, char color);
+ * ========================================================================= */
+sys_drawLine:
+    movea.l #PICO_VGA_BASE, %a0
+
+    move.b %d0, REG_PRIMITIVE_COLOR(%A0)            | COLOR
+
+    move.b %d2, REG_X_LOW(%A0)                      | X LOW
+    lsr.w  #8, %d2                                  | 
+    move.b %d2, REG_X_HIGH(%A0)                     | X HIGH
+
+    move.b %d3, REG_Y_LOW(%A0)                      | Y LOW
+    lsr.w  #8, %d3                                  | 
+    move.b %d3, REG_Y_HIGH(%A0)                     | Y HIGH
+
+    move.b %D4, REG_X1_LOW(%A0)                      | X1 LOW
+    lsr.w  #8, %D4                                  | 
+    move.b %D4, REG_X1_HIGH(%A0)                     | X1 HIGH
+
+    move.b %D5, REG_Y1_LOW(%A0)                      | Y1 LOW
+    lsr.w  #8, %D5                                  | 
+    move.b %D5, REG_Y1_HIGH(%A0)                     | Y1 HIGH
+
+    move.b #CMD_DRAW_LINE,REG_RUN_CMD(%A0)
+    bra     sys_exit
+/* =========================================================================
+ * 4.sys_drawCircle
+ * Regs used: DO=COLOR,D1=FUNCTION,D2=X0,D3=Y0,D4=R(4 PARAMETERS)
+void drawCircle(short x0, short y0, short r, char color);
+ * ========================================================================= */
+sys_drawCircle:
+    movea.l #PICO_VGA_BASE, %a0
+
+    move.b %d0, REG_PRIMITIVE_COLOR(%A0)            | COLOR
+
+    move.b %d2, REG_X_LOW(%A0)                      | X LOW
+    lsr.w  #8, %d2                                  | 
+    move.b %d2, REG_X_HIGH(%A0)                     | X HIGH
+
+    move.b %d3, REG_Y_LOW(%A0)                      | Y LOW
+    lsr.w  #8, %d3                                  | 
+    move.b %d3, REG_Y_HIGH(%A0)                     | Y HIGH
+
+    move.b %d4, REG_RAIO(%A0)                       | RAIO 
+
+    move.b #CMD_DRAW_CIRCLE,REG_RUN_CMD(%A0)
+    bra     sys_exit
+/* =========================================================================
+ * 5.sys_drawCircleHelper
+ * Regs used: DO=COLOR,D1=FUNCTION,D2=X0,D3=Y0,D4=R,D5=CORNERNAME(5 PARAMETERS)
+void drawCircleHelper( short x0, short y0, short r, unsigned char cornername, char color);
+ * ========================================================================= */
+sys_drawCircleHelper:
+    movea.l #PICO_VGA_BASE, %a0
+
+    move.b %d0, REG_PRIMITIVE_COLOR(%A0)            | COLOR
+
+    move.b %d2, REG_X_LOW(%A0)                      | X LOW
+    lsr.w  #8, %d2                                  | 
+    move.b %d2, REG_X_HIGH(%A0)                     | X HIGH
+
+    move.b %d3, REG_Y_LOW(%A0)                      | Y LOW
+    lsr.w  #8, %d3                                  | 
+    move.b %d3, REG_Y_HIGH(%A0)                     | Y HIGH
+
+    move.b %D4, REG_RAIO(%A0)                      | X1 LOW
+
+    move.b %D5, REG_CORNERNAME(%A0)                      | Y1 LOW
+
+    move.b #CMD_DRAW_CIRCLEHELPER,REG_RUN_CMD(%A0)
+    bra     sys_exit
+/* =========================================================================
+ * 6.sys_fillCircle
+ * Regs used: DO=COLOR,D1=FUNCTION,D2=X0,D3=Y0,D4=R(4 PARAMETERS)
+void fillCircle(short x0, short y0, short r, char color);
+ * ========================================================================= */
+sys_fillCircle:
+    movea.l #PICO_VGA_BASE, %a0
+
+    move.b %d0, REG_PRIMITIVE_COLOR(%A0)            | COLOR
+
+    move.b %d2, REG_X_LOW(%A0)                      | X LOW
+    lsr.w  #8, %d2                                  | 
+    move.b %d2, REG_X_HIGH(%A0)                     | X HIGH
+
+    move.b %d3, REG_Y_LOW(%A0)                      | Y LOW
+    lsr.w  #8, %d3                                  | 
+    move.b %d3, REG_Y_HIGH(%A0)                     | Y HIGH
+
+    move.b %d4, REG_RAIO(%A0)                       | RAIO 
+
+    move.b #CMD_DRAW_FILLCIRCLE,REG_RUN_CMD(%A0)
+    bra     sys_exit
+/* =========================================================================
+ * 7.sys_fillCircleHelper
+ * Regs used: DO=COLOR,D1=FUNCTION,D2=X0,D3=Y0,A1=R,A2=CORNERNAME,A3=DELTA(6 PARAMETERS)
+void fillCircleHelper(short x0, short y0, short r, unsigned char cornername, short delta, char color);
+ * ========================================================================= */
+sys_fillCircleHelper:
+    movea.l #PICO_VGA_BASE, %a0
+
+    move.b %d0, REG_PRIMITIVE_COLOR(%A0)            | COLOR
+
+    move.b %d2, REG_X_LOW(%A0)                      | X LOW
+    lsr.w  #8, %d2                                  | 
+    move.b %d2, REG_X_HIGH(%A0)                     | X HIGH
+
+    move.b %d3, REG_Y_LOW(%A0)                      | Y LOW
+    lsr.w  #8, %d3                                  | 
+    move.b %d3, REG_Y_HIGH(%A0)                     | Y HIGH
+
+    move.b %D4, REG_RAIO(%A0)                       | RAIO LOW
+    move.b %D5, REG_CORNERNAME(%A0)                 | CORNERNAME LOW
+    move.b %D6, REG_DELTA(%A0)                      | DELTA LOW
+
+    move.b #CMD_DRAW_FILLCIRCLEHELPER,REG_RUN_CMD(%A0)
+    bra     sys_exit
+/* =========================================================================
+ * 8.sys_drawRoundRect
+ * Regs used: DO=COLOR,D1=FUNCTION,D2=X,D3=Y,D4=W,D5=H,D6=R(6 PARAMETERS)
+void drawRoundRect(short x, short y, short w, short h, short r, char color);
+ * ========================================================================= */
+sys_drawRoundRect:
+    movea.l #PICO_VGA_BASE, %a0
+
+    move.b %d0, REG_PRIMITIVE_COLOR(%A0)            | COLOR
+
+    move.b %d2, REG_X_LOW(%A0)                      | X LOW
+    lsr.w  #8, %d2                                  | 
+    move.b %d2, REG_X_HIGH(%A0)                     | X HIGH
+
+    move.b %d3, REG_Y_LOW(%A0)                      | Y LOW
+    lsr.w  #8, %d3                                  | 
+    move.b %d3, REG_Y_HIGH(%A0)                     | Y HIGH
+    
+    move.b %d4, REG_WIDTH_LOW(%A0)                      | W LOW
+    lsr.w  #8, %d4                                  | 
+    move.b %d4, REG_WIDTH_HIGH(%A0)                     | W HIGH
+
+    move.b %d5, REG_HEIGHT_LOW(%A0)                      | H LOW
+    lsr.w  #8, %d5                                  | 
+    move.b %d5, REG_HEIGHT_HIGH(%A0)                     | H HIGH
+
+    move.b %D6, REG_RAIO(%A0)                       | RAIO LOW
+
+    move.b #CMD_DRAW_ROUNDRECT,REG_RUN_CMD(%A0)
+    bra     sys_exit
+/* =========================================================================
+ * 9.sys_fillRoundRect
+ * Regs used: DO=COLOR,D1=FUNCTION,D2=X,D3=Y,D4=W,D5=H,D6=R(6 PARAMETERS)
+void fillRoundRect(short x, short y, short w, short h, short r, char color); 
+ * ========================================================================= */
+sys_fillRoundRect:
+    movea.l #PICO_VGA_BASE, %a0
+
+    move.b %d0, REG_PRIMITIVE_COLOR(%A0)            | COLOR
+
+    move.b %d2, REG_X_LOW(%A0)                      | X LOW
+    lsr.w  #8, %d2                                  | 
+    move.b %d2, REG_X_HIGH(%A0)                     | X HIGH
+
+    move.b %d3, REG_Y_LOW(%A0)                      | Y LOW
+    lsr.w  #8, %d3                                  | 
+    move.b %d3, REG_Y_HIGH(%A0)                     | Y HIGH
+    
+    move.b %d4, REG_WIDTH_LOW(%A0)                      | W LOW
+    lsr.w  #8, %d4                                  | 
+    move.b %d4, REG_WIDTH_HIGH(%A0)                     | W HIGH
+
+    move.b %d5, REG_HEIGHT_LOW(%A0)                      | H LOW
+    lsr.w  #8, %d5                                  | 
+    move.b %d5, REG_HEIGHT_HIGH(%A0)                     | H HIGH
+
+    move.b %D6, REG_RAIO(%A0)                       | RAIO LOW
+
+    move.b #CMD_DRAW_FILLROUNDRECT,REG_RUN_CMD(%A0)
+    bra     sys_exit
+/* =========================================================================
+ * 10.fillRect DO=COLOR,D1=FUNCTION,D2=X,D3=Y,D4=W,D5=H(6 PARAMETERS)
+ * Regs used: A0, D0
+void fillRect(short x, short y, short w, short h, color_t color);
+ * ========================================================================= */
+sys_fillRect:
+    movea.l #PICO_VGA_BASE, %a0
+
+    move.b %d0, REG_PRIMITIVE_COLOR(%A0)            | COLOR
+
+    move.b %d2, REG_X_LOW(%A0)                      | X LOW
+    lsr.w  #8, %d2                                  | 
+    move.b %d2, REG_X_HIGH(%A0)                     | X HIGH
+
+    move.b %d3, REG_Y_LOW(%A0)                      | Y LOW
+    lsr.w  #8, %d3                                  | 
+    move.b %d3, REG_Y_HIGH(%A0)                     | Y HIGH
+    
+    move.b %d4, REG_WIDTH_LOW(%A0)                      | W LOW
+    lsr.w  #8, %d4                                  | 
+    move.b %d4, REG_WIDTH_HIGH(%A0)                     | W HIGH
+
+    move.b %d5, REG_HEIGHT_LOW(%A0)                      | H LOW
+    lsr.w  #8, %d5                                  | 
+    move.b %d5, REG_HEIGHT_HIGH(%A0)                     | H HIGH
+
+    move.b #CMD_DRAW_FILLRECT,REG_RUN_CMD(%A0)
+    bra     sys_exit
+/* =========================================================================
+ * 11.fillTri
+ * Regs used: DO=COLOR,D1=FUNCTION,D2=X0,D3=Y0,D4=X1,D5=Y1,D6=X2,D7=Y2(7 PARAMETERS)
+void fillTri(float x0, float y0, float x1, float y1, float x2, float y2, char color);
+ * ========================================================================= */
+sys_fillTri:
+    movea.l #PICO_VGA_BASE, %a0
+
+    move.b %d0, REG_PRIMITIVE_COLOR(%A0)            | COLOR
+
+    move.b %d2, REG_X_LOW(%A0)                      | X LOW
+    lsr.w  #8, %d2                                  | 
+    move.b %d2, REG_X_HIGH(%A0)                     | X HIGH
+
+    move.b %d3, REG_Y_LOW(%A0)                      | Y LOW
+    lsr.w  #8, %d3                                  | 
+    move.b %d3, REG_Y_HIGH(%A0)                     | Y HIGH
+
+    move.b %D4, REG_X1_LOW(%A0)                      | X1 LOW
+    lsr.w  #8, %D4                                  | 
+    move.b %D4, REG_X1_HIGH(%A0)                     | X1 HIGH
+
+    move.b %D5, REG_Y1_LOW(%A0)                      | Y1 LOW
+    lsr.w  #8, %D5                                  | 
+    move.b %D5, REG_Y1_HIGH(%A0)                     | Y1 HIGH
+
+    move.b %D6, REG_X2_LOW(%A0)                      | X1 LOW
+    lsr.w  #8, %D6                                  | 
+    move.b %D6, REG_X2_HIGH(%A0)                     | X1 HIGH
+
+    move.b %D7, REG_Y2_LOW(%A0)                      | Y1 LOW
+    lsr.w  #8, %D7                                  | 
+    move.b %D7, REG_Y2_HIGH(%A0)                     | Y1 HIGH
+
+    move.b #CMD_DRAW_FILLTRIANGLE,REG_RUN_CMD(%A0)
+    bra     sys_exit
+
+sys_exit:
+    /* Restaura o mundo (D0 contém o retorno de cconin se foi chamada) */
+    movem.l (%sp)+,%d1-%d7/%a0-%a6
+    rte

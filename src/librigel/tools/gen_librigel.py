@@ -28,6 +28,8 @@ TRAP = 0          # TRAP #0
 # grupo None  = glue da newlib (nome normal, sem prototipo: quem declara e' a newlib)
 # argumentos None = sem header
 TABLE = [
+  ("GETCWD", "file", "getcwd", "char *buf, long size"),
+  ("CHDIR",  "file", "chdir",  "char *path"),
   # ---- glue da newlib (nomes que a libc chama) ----
   ("EXIT",   None, "_exit",  None), ("OPEN",  None, "open",  None), ("CLOSE", None, "close", None),
   ("READ",   None, "read",   None), ("WRITE", None, "write", None), ("LSEEK", None, "lseek", None),

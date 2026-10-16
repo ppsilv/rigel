@@ -27,7 +27,7 @@ void do_help(int argc, char *argv[])
 __attribute__((used)) void do_load(int argc, char *argv[]){
 //No shell, use assim:
     char *args[] = { "hello.elf", "ola", "mundo", NULL };
-    long pid = rigel_spawn("hello.elf", args);
+    long pid = rigel_spawn("/hello.elf", args);   /* absoluto: o cd muda o diretorio corrente */
     printf("spawn -> pid=%ld\n", pid);
     if (pid > 0) {
        rigel_waitpid(pid);
@@ -113,12 +113,9 @@ void do_cat(int argc, char *argv[])
     int fd;
     int offset=0;
     int whence=SEEK_SET;
-    char arquivo[16];
     char buffer_leitura[512];
 
-    sprintf(arquivo,"%s",argv[0]);
-
-    fd = open( arquivo, O_RDWR );
+    fd = open( argv[0], O_RDWR );
     if (fd < 1) {
         printf("Erro ao abrir %s \n",argv[0]);
         return;
@@ -147,7 +144,7 @@ void do_uptime(int argc, char *argv[]){
 }
 
 void do_ls(int argc, char *argv[]){
-    const char *path = (argc > 1) ? argv[1] : "/";
+    const char *path = (argc >= 1) ? argv[0] : ".";   /* sem argumento: diretorio corrente */
 
     long d = rigel_opendir((char *)path);
     if (d < 0) {

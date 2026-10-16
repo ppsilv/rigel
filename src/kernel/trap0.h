@@ -61,5 +61,7 @@ extern long sys_fillcirclehelper(long x0, long y0, long r, long cornername, long
 extern long sys_drawroundrect(long x, long y, long w, long h, long r, long color);
 extern long sys_fillroundrect(long x, long y, long w, long h, long r, long color);
 extern long sys_fillrect(long x, long y, long w, long h, long color);
+extern long sys_chdir(const char *path);
+extern long sys_getcwd(char *buf, long size);
 
 #endif

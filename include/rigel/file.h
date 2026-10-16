@@ -6,6 +6,8 @@
 extern "C" {
 #endif
 
+long rigel_getcwd(char *buf, long size);
+long rigel_chdir(char *path);
 long rigel_fsync(long fd);
 long rigel_ioctl(long fd, long cmd, void *arg);
 long rigel_dup(long fd_old, long fd_new);

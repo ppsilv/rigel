@@ -6,7 +6,7 @@ SIZE    := $(CROSS)size
 
 
 CPU     ?= -m68000
-CFLAGS  := $(CPU) -Wall -Os -ffreestanding -fomit-frame-pointer -ffunction-sections -fdata-sections -include lixo/fix_winnt.h\
+CFLAGS  := $(CPU) -Wall -Os -ffreestanding -Wl,--strip-debug -fomit-frame-pointer -ffunction-sections -fdata-sections -include lixo/fix_winnt.h\
 -I $(RIGELDIR)/include \
 -I $(RIGELDIR)/src/kernel/include \
 -I $(RIGELDIR)/src/librigel/include \

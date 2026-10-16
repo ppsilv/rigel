@@ -84,6 +84,8 @@
 #define SYS_IOCTL              0x004E
 #define SYS_WAITPID            0x004F
 #define SYS_GETKBDKEY          0x0050
+#define SYS_CHDIR              0x0051
+#define SYS_GETCWD             0x0052
 
 #define SYS_GETUPTIME          0x1050
 

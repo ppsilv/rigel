@@ -8,6 +8,8 @@
         .endm
 
         .text
+        SYSCALL rigel_getcwd                 0x0052   /* SYS_GETCWD */
+        SYSCALL rigel_chdir                  0x0051   /* SYS_CHDIR */
         SYSCALL _exit                        0x0000   /* SYS_EXIT */
         SYSCALL open                         0x0048   /* SYS_OPEN */
         SYSCALL close                        0x0049   /* SYS_CLOSE */

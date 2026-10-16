@@ -20,6 +20,12 @@ extern void do_dump(int argc, char *argv[]);
 extern void do_cat(int argc, char *argv[]);
 extern void do_uptime(int argc, char *argv[]);
 extern void do_ls(int argc, char *argv[]);
+extern void do_cd(int argc, char *argv[]);
+extern void do_mkdir(int argc, char *argv[]);
+extern void do_rmdir(int argc, char *argv[]);
+extern void do_pwd(int argc, char *argv[]);
+extern void shell_cwd_refresh(void);
+extern void shell_prompt(char *buf, size_t n);
 
 const cmd_entry_t g_cmd_table[] = {
 //    {"cat",         1,  1, &do_cat,         "Display contents of <file>"},
@@ -27,6 +33,10 @@ const cmd_entry_t g_cmd_table[] = {
 //    {"cp",          2,  2, &do_copyfile,    "Copy file <src> <dest>"},
 //    {"loadmem",	    1,  2, &do_loadmem,	    "Load a file to the specified memory location <file> <mem>" },
 //    {"ls",          0,  1, &do_ls,	        "List directory contents" },
+    {"cd",          0,  1, &do_cd,          "Change directory [dir] (no argument: go to /)" },
+    {"pwd",         0,  0, &do_pwd,         "Print the current directory" },
+    {"mkdir",       1,  0, &do_mkdir,       "Create folder(s) <dir> [dir ...]" },
+    {"rmdir",       1,  0, &do_rmdir,       "Delete empty folder(s) <dir> [dir ...]" },
 //    {"mkdir",	    1,  1, &do_mkdir_shel,	    "Create the specified folder <dir>" },
 //    {"mv",          2,  2, &do_rename_shel,      "Rename file <src> to <dest>" },
 //    {"rm",          1,  1, &do_delete,	    "Delete file <file>" },
@@ -154,11 +164,13 @@ extern void readline_with_history(char *buf);
 
 int main(int argc, char *argv[]){
     char buffer[128];
+    char prompt[160];
     printf("\nSHELL V1 october/13 2026\n");
     int ret;
+    shell_cwd_refresh();
     while(1){    
-        //display_prompt();
-        printf(">");
+        shell_prompt(prompt, sizeof prompt);   /* "/dir/sub> " */
+        printf("%s", prompt);
         fflush(stdout);
         readline_with_history(buffer);
         history_add(buffer); 

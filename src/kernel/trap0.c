@@ -137,6 +137,9 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
                         return 0; 
     case SYS_GOHOME:    sys_gohome(); 
                         return 0;
+    case SYS_CHDIR:  return sys_chdir((const char *)a1);
+    case SYS_GETCWD: return sys_getcwd((char *)a1, (long)a2);
+
     case SYS_DRAWVLINE:  return -1;
     case SYS_DRAWHLINE:  return -1;
     case SYS_DRAWLINE:   return -1;

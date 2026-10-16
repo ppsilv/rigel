@@ -3,16 +3,18 @@ LD = m68k-elf-ld
 OBJCOPY = m68k-elf-objcopy
 VASM = vasmm68k_mot 
 
-CFLAGS = -Wall -O0 -I./include -I$(RIGELDIR)/include -ffreestanding -nostdlib -D__mc68000__ -m68000
+CFLAGS = -Wall -Os -I./include -I$(RIGELDIR)/include  -ffreestanding -nostdlib -Wl,--strip-debug -D__mc68000__ -m68000 \
+-I$(RIGELDIR)/src/liblwip/src/include
+
 CFLAGS += -DCHIP_$(CHIP_TYPE) -DROM_SIZE_BYTES=$(ROM_SIZE)
 CFLAGS += -fomit-frame-pointer
 
 LIBGCC = $(shell $(CC) -m68000 -print-libgcc-file-name)
 
-VASMFLAGS = -Felf -m68000 -quiet -I ./includes -I../../include
+VASMFLAGS = -Felf -m68000 -quiet -I./includes -I../../include
 
-LDFLAGS = -T ./kernel.ld -L../../lib -nostdlib -Map=kernel.map
-LDLIBS =
+LDFLAGS = -T ./kernel.ld -L$(RIGELDIR)/src/liblwip -nostdlib -Map=kernel.map
+LDLIBS = -lethernet
 
 # 1. ADICIONADO: Lista de arquivos em Assembly (.S)
 ASMS =  crt0.S ctx_switch_68000.S interrupts.S ./exceptions/exceptions_asm.S trap0_entry.S ./sys_vga.S
@@ -21,7 +23,7 @@ VASMS =
 
 # Lista de arquivos C (CORRIGIDO: não tinha um espaço)
 SRCS =  kernel.c kmalloc.c scheduler.c trap0.c ./syscall/trap_table.c  task_create.c ./mm/slots.c kfunctions.c \
-./sys_fsdir.c ./sys_fsfile.c ./sys_fsrtc.c  ./sys_proc.c ./sys_vectors.c ./sys_fscwd.c \
+./sys_fsdir.c ./sys_fsfile.c ./sys_fsrtc.c  ./sys_proc.c ./sys_vectors.c ./sys_fscwd.c ./w5100_netif.c ./sys_net.c ./sys_arch.c \
 ./spawn/loader_elf.c \
 ./spawn/elf_reloc.c \
 ./spawn/spawn.c \
@@ -87,7 +89,8 @@ all: $(TARGET_BIN)  # ← CORRIGIDO: usa TARGET_BIN
 
 # 4. CORRIGIDO: Gera kernel.elf a partir dos objetos
 $(TARGET_ELF): $(OBJS)
-	$(LD) $(LDFLAGS) $(OBJS) $(LIBGCC) $(LDLIBS) -o $@
+	#$(LD) $(LDFLAGS) $(OBJS) $(LIBGCC) $(LDLIBS) -o $@
+	$(LD) $(LDFLAGS) $(OBJS) --start-group $(LDLIBS) $(LIBGCC) --end-group -o $@
 	@echo "Linked: $@"
 	@echo "╔══════════════════════════╗"
 	@echo "║  COMPILACAO TERMINADA!   ║"

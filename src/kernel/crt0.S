@@ -18,7 +18,8 @@
 .extern kernel_main
 .extern __bss_start
 .extern __bss_end
-.extern __estack
+.extern __estack_init
+.extern __estack_end
 
 .text
 
@@ -31,7 +32,7 @@ _header:
 
 _start:
     move.w  #0x2700,%sr        | desliga todas as interrupcoes
-    lea     __estack,%sp       | seta o SP do kernel
+    lea     __estack_init,%sp       | seta o SP do kernel
     move.l  %a0,%a2            | &bootinfo vindo do Rigel 
 
     lea     __bss_start,%a0

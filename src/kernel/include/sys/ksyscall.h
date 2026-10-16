@@ -31,6 +31,7 @@
 #define SYS_FFINDFIRST         0x0019
 #define SYS_FFINDNEXT          0x001A
 #define SYS_VGAPUTCHAR         0x001B
+
 #define SYS_GOTOXY             0x001C
 #define SYS_GOHOME             0x001D
 #define SYS_SETTEXTCOLOR       0x001E
@@ -45,6 +46,7 @@
 #define SYS_DRAWROUNDRECT      0x0027
 #define SYS_FILLROUNDRECT      0x0028
 #define SYS_FILLRECT           0x0029
+
 #define SYS_READTIME           0x002A
 #define SYS_WRITETIME          0x002B
 #define SYS_EEPROMREADBYTE     0x002C
@@ -86,23 +88,11 @@
 #define SYS_GETKBDKEY          0x0050
 #define SYS_CHDIR              0x0051
 #define SYS_GETCWD             0x0052
+#define SYS_SOCKET             0x0053 
 
 #define SYS_GETUPTIME          0x1050
 
-//VGA syscalls
-#define SYS_GOTOXY              0x1100
-#define SYS_CLRSCR              0x1101
-#define SYS_SETTEXTCOLOR        0x1102
-#define SYS_DRAWVLINE           0x1103
-#define SYS_DRAWHLINE           0x1104
-#define SYS_DRAWLINE            0x1105
-#define SYS_DRAWCIRCLE          0x1106
-#define SYS_DRAWCIRCLEHELPER    0x1107
-#define SYS_FILLCIRCLE          0x1108
-#define SYS_FILLCIRCLEHELPER    0x1109
-#define SYS_DRAWROUNDRECT       0x110A
-#define SYS_FILLROUNDRECT       0x110B
-#define SYS_FILLRECT            0x110C
+ 
 
 
 

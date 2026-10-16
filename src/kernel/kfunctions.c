@@ -72,11 +72,11 @@ long sys_ppiportcread(void){}
 long sys_ppiportcwrite(long value){}
 
 /* sockets (w5100 / lwip) */
-long sys_connect(long sockfd, void *addr, long addrlen){}
-long sys_bind(long sockfd, void *addr, long addrlen){}
-long sys_listen(long sockfd, long backlog){}
-long sys_accept(long sockfd, void *addr, long *addrlen){}
-long sys_setsockopt(long sockfd, long level, long optname, void *optval, long optlen){}
-long sys_getpid(void){}
+//long sys_connect(long sockfd, void *addr, long addrlen){}
+//long sys_bind(long sockfd, void *addr, long addrlen){}
+//long sys_listen(long sockfd, long backlog){}
+//long sys_accept(long sockfd, void *addr, long *addrlen){}
+//long sys_setsockopt(long sockfd, long level, long optname, void *optval, long optlen){}
+//long sys_getpid(void){return -1;}
 
 

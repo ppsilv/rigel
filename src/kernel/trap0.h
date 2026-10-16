@@ -64,4 +64,12 @@ extern long sys_fillrect(long x, long y, long w, long h, long color);
 extern long sys_chdir(const char *path);
 extern long sys_getcwd(char *buf, long size);
 
+extern long sys_socket(long d, long t, long p);
+extern long sys_bind(long fd, const void *a, long len);
+extern long sys_listen(long fd, long backlog);
+extern long sys_accept(long fd, void *a, long *len);
+extern long sys_connect(long fd, const void *a, long len);
+extern long sys_setsockopt(long fd, long level, long opt, const void *val, long len);
+extern void sys_net_task_exit(int owner);
+
 #endif

@@ -6,11 +6,12 @@
 extern "C" {
 #endif
 
-long rigel_connect(long sockfd, void *addr, long addrlen);
-long rigel_bind(long sockfd, void *addr, long addrlen);
-long rigel_listen(long sockfd, long backlog);
-long rigel_accept(long sockfd, void *addr, long *addrlen);
-long rigel_setsockopt(long sockfd, long level, long optname, void *optval, long optlen);
+long rigel_socket(long domain, long type, long protocol);
+long rigel_connect(long fd, const void *addr, long len);
+long rigel_bind(long fd, const void *addr, long len);
+long rigel_listen(long fd, long backlog);
+long rigel_accept(long fd, void *addr, long *len);
+long rigel_setsockopt(long fd, long level, long opt, const void *val, long len);
 
 #ifdef __cplusplus
 }

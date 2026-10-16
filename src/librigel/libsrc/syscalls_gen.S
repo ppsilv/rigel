@@ -8,6 +8,7 @@
         .endm
 
         .text
+        SYSCALL rigel_socket                 0x0053   /* SYS_SOCKET */
         SYSCALL rigel_getcwd                 0x0052   /* SYS_GETCWD */
         SYSCALL rigel_chdir                  0x0051   /* SYS_CHDIR */
         SYSCALL _exit                        0x0000   /* SYS_EXIT */
@@ -48,20 +49,20 @@
         SYSCALL rigel_ff_lseek               0x0009   /* SYS_FLSEEK */
         SYSCALL rigel_ff_ioctl               0x000A   /* SYS_FIOCTL */
         SYSCALL rigel_vga_putchar            0x001B   /* SYS_VGAPUTCHAR */
-        SYSCALL rigel_gotoxy                 0x1100   /* SYS_GOTOXY */
+        SYSCALL rigel_gotoxy                 0x001C   /* SYS_GOTOXY */
         SYSCALL rigel_gohome                 0x001D   /* SYS_GOHOME */
-        SYSCALL rigel_settextcolor           0x1102   /* SYS_SETTEXTCOLOR */
-        SYSCALL rigel_clrscr                 0x1101   /* SYS_CLRSCR */
-        SYSCALL rigel_drawvline              0x1103   /* SYS_DRAWVLINE */
-        SYSCALL rigel_drawhline              0x1104   /* SYS_DRAWHLINE */
-        SYSCALL rigel_drawline               0x1105   /* SYS_DRAWLINE */
-        SYSCALL rigel_drawcircle             0x1106   /* SYS_DRAWCIRCLE */
-        SYSCALL rigel_drawcirclehelper       0x1107   /* SYS_DRAWCIRCLEHELPER */
-        SYSCALL rigel_fillcircle             0x1108   /* SYS_FILLCIRCLE */
-        SYSCALL rigel_fillcirclehelper       0x1109   /* SYS_FILLCIRCLEHELPER */
-        SYSCALL rigel_drawroundrect          0x110A   /* SYS_DRAWROUNDRECT */
-        SYSCALL rigel_fillroundrect          0x110B   /* SYS_FILLROUNDRECT */
-        SYSCALL rigel_fillrect               0x110C   /* SYS_FILLRECT */
+        SYSCALL rigel_settextcolor           0x001E   /* SYS_SETTEXTCOLOR */
+        SYSCALL rigel_clrscr                 0x001F   /* SYS_CLRSCR */
+        SYSCALL rigel_drawvline              0x0020   /* SYS_DRAWVLINE */
+        SYSCALL rigel_drawhline              0x0021   /* SYS_DRAWHLINE */
+        SYSCALL rigel_drawline               0x0022   /* SYS_DRAWLINE */
+        SYSCALL rigel_drawcircle             0x0023   /* SYS_DRAWCIRCLE */
+        SYSCALL rigel_drawcirclehelper       0x0024   /* SYS_DRAWCIRCLEHELPER */
+        SYSCALL rigel_fillcircle             0x0025   /* SYS_FILLCIRCLE */
+        SYSCALL rigel_fillcirclehelper       0x0026   /* SYS_FILLCIRCLEHELPER */
+        SYSCALL rigel_drawroundrect          0x0027   /* SYS_DRAWROUNDRECT */
+        SYSCALL rigel_fillroundrect          0x0028   /* SYS_FILLROUNDRECT */
+        SYSCALL rigel_fillrect               0x0029   /* SYS_FILLRECT */
         SYSCALL rigel_readtime               0x002A   /* SYS_READTIME */
         SYSCALL rigel_writetime              0x002B   /* SYS_WRITETIME */
         SYSCALL rigel_readrtc                0x0046   /* SYS_READRTC */

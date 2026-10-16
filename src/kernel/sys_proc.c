@@ -46,3 +46,9 @@ long sys_yield(void)
         ;
     return 0;
 }
+
+#include <sys/scheduler.h>
+long sys_getpid(void)
+{
+    return current_task ? (long)current_task->id : 0;
+}

@@ -28,6 +28,7 @@ TRAP = 0          # TRAP #0
 # grupo None  = glue da newlib (nome normal, sem prototipo: quem declara e' a newlib)
 # argumentos None = sem header
 TABLE = [
+  ("SOCKET",     "net", "socket",     "long domain, long type, long protocol"),
   ("GETCWD", "file", "getcwd", "char *buf, long size"),
   ("CHDIR",  "file", "chdir",  "char *path"),
   # ---- glue da newlib (nomes que a libc chama) ----
@@ -110,11 +111,11 @@ TABLE = [
   ("PPIPORTCREAD",  "ppi", "ppi_portc_read",   "void"),
   ("PPIPORTCWRITE", "ppi", "ppi_portc_write",  "long value"),
   # ---- rede ----
-  ("CONNECT",    "net", "connect",    "long sockfd, void *addr, long addrlen"),
-  ("BIND",       "net", "bind",       "long sockfd, void *addr, long addrlen"),
-  ("LISTEN",     "net", "listen",     "long sockfd, long backlog"),
-  ("ACCEPT",     "net", "accept",     "long sockfd, void *addr, long *addrlen"),
-  ("SETSOCKOPT", "net", "setsockopt", "long sockfd, long level, long optname, void *optval, long optlen"),
+  ("CONNECT",    "net", "connect",    "long fd, const void *addr, long len"),
+  ("BIND",       "net", "bind",       "long fd, const void *addr, long len"),
+  ("LISTEN",     "net", "listen",     "long fd, long backlog"),
+  ("ACCEPT",     "net", "accept",     "long fd, void *addr, long *len"),
+  ("SETSOCKOPT", "net", "setsockopt", "long fd, long level, long opt, const void *val, long len"),
 
   ("GETKBDKEY", "kbd", "getkbdkey",  "void"),
   ("GETUPTIME", "proc", "getuptime",  "void"),  

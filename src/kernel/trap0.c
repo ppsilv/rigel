@@ -54,6 +54,7 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
             sys_fs_task_exit((int)current_task->id);
             sys_dir_task_exit((int)current_task->id);
         }
+        sys_net_task_exit((int)current_task->id);
         OS_TaskExit();            /* nao volta */
         return 0;
     case SYS_GETPID:
@@ -140,6 +141,13 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_CHDIR:  return sys_chdir((const char *)a1);
     case SYS_GETCWD: return sys_getcwd((char *)a1, (long)a2);
 
+    case SYS_SOCKET:     return sys_socket(a1, a2, a3);
+    case SYS_BIND:       return sys_bind(a1, (const void *)a2, a3);
+    case SYS_LISTEN:     return sys_listen(a1, a2);
+    case SYS_ACCEPT:     return sys_accept(a1, (void *)a2, (long *)a3);
+    case SYS_CONNECT:    return sys_connect(a1, (const void *)a2, a3);
+    case SYS_SETSOCKOPT: return sys_setsockopt(a1, a2, a3, (const void *)a4, a5);
+
     case SYS_DRAWVLINE:  return -1;
     case SYS_DRAWHLINE:  return -1;
     case SYS_DRAWLINE:   return -1;
@@ -175,11 +183,6 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_PPICCFG: return -1;   /* TODO */
     case SYS_PPIPORTCREAD: return -1;   /* TODO */
     case SYS_PPIPORTCWRITE: return -1;   /* TODO */
-    case SYS_CONNECT: return -1;   /* TODO */
-    case SYS_BIND: return -1;   /* TODO */
-    case SYS_LISTEN: return -1;   /* TODO */
-    case SYS_ACCEPT: return -1;   /* TODO */
-    case SYS_SETSOCKOPT: return -1;   /* TODO */
     case SYS_READRTC:  return sys_readrtc();
     case SYS_WRITERTC: return sys_writertc(a1);
     case SYS_SINC: return -1;   /* TODO */

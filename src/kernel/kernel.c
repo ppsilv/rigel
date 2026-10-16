@@ -8,6 +8,7 @@
 #include "./exceptions/exceptions.h"
 #include <sys/vfs.h>
 #include "ringbuffer.h"
+#include "w5100_netif.h"
 
 FATFS FatFs; 
 
@@ -148,6 +149,7 @@ extern void run_scheduler_test(void);
 extern uint32_t __kernel_end;   /* símbolo do seu linker script, fim do .bss do kernel */
 extern uint32_t __estack; 
 extern void kmalloc_init(void *base, uint32_t size);
+extern char __heap_start[], __heap_end[];
 extern void OS_TickISR(void);
 extern void Int3Handler(void);
 extern void sys_setramvector(uint32_t stub_addr, uint32_t handler_addr);
@@ -179,9 +181,10 @@ int kernel_main(){
 
     uint32_t heap_base = (uint32_t)&__kernel_end;
     uint32_t heap_size = __estack - heap_base - 0x4000;  /* 16 KB de folga pra pilha */
-    kmalloc_init((void*)0x92000, 0x8000);
+    //kmalloc_init((void*)0x92000, 0x8000); ERRO FEIO PORQUE TEM VALOR CHUMBADO ESTÁTICAMENTE
+    kmalloc_init(__heap_start, (uint32_t)(__heap_end - __heap_start));
 
-    kernel_puts("Rigel 0.10 kernel 0.10\n");
+    kernel_puts("Rigel 0.10 kernel 0.101\n");
     do_ideinit(0,NULL);
 
    kernel_puts("Ring buffer init\n");
@@ -212,6 +215,13 @@ int kernel_main(){
          (void)j;       
     }
     UNLOCK(saved_sr);
+
+    kernel_puts("Initializing ethernet\n ");
+    if( rigel_net_start() ){
+        kernel_puts("Initializing ethernet FAILED...\n ");
+    }else{
+        kernel_puts("Initializing ethernet SUCCESS...\n ");
+    }
 
     kernel_puts("Loading process #1 init\n ");
 

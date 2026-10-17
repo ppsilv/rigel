@@ -10,6 +10,7 @@
  */
 #include <stdint.h>
 #include <string.h>
+#include <sys/scheduler.h>
 
 #include "lwip/opt.h"
 #include "lwip/def.h"
@@ -237,7 +238,8 @@ static void rx_thread(void *arg)
 {
     struct netif *nif = (struct netif *)arg;
     struct pbuf *p;
-    uint32_t t, n = 0;
+//    uint32_t t, n = 0; new_scheduler
+    uint32_t  n = 0;
 
     for (;;) {
         /* a cada ~30 s avisa se alguma pilha de thread esta quase cheia; aos ~60 s mostra todas */
@@ -261,9 +263,12 @@ static void rx_thread(void *arg)
                 pbuf_free(p);
             DBG("  RX entregue ao lwIP\n");
         }
-        t = systemTick;                                     /* espera o proximo tick */
+        /* new_schduler
+        t = systemTick;                                     // espera o proximo tick
         while (systemTick == t)
-            ;
+           ;
+        */        
+        OS_SleepTicks(1);   
     }
 }
 

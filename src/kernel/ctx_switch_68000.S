@@ -12,6 +12,7 @@
 
 .global OS_StartHighRdy
 .global OS_TickISR
+.global OS_Yield
 
 .extern current_task
 .extern OS_Schedule
@@ -88,4 +89,31 @@ OS_TickISR:
         movem.l (%sp)+,%d0-%d7/%a0-%a6
         rte
 
+|
+| OS_Yield -- a task atual larga a CPU AGORA (sem esperar o tick).
+|
+| Quem chamou fez "jsr OS_Yield", entao o endereco de retorno (4 bytes) ja esta na pilha.
+| Empilhando o SR por cima, a pilha fica [SR][PC] -- exatamente o frame que o 68000 monta numa
+| excecao. Dai em diante e' o mesmo caminho do OS_TickISR: salva D0-D7/A0-A6, guarda o SP no TCB,
+| chama OS_Schedule, carrega o SP da task escolhida, restaura e faz rte. Quando esta task for
+| escolhida de novo, o rte volta pra instrucao logo depois do "jsr OS_Yield", com o SR de antes.
+|
+| So' para 68000 (frame sem format word). Chame sempre de dentro de uma task, em modo supervisor.
+|
+OS_Yield:
+        move.w  %sr,-(%sp)              | completa o frame: [SR][PC de retorno]
+        ori.w   #0x0700,%sr             | o tick nao pode entrar no meio da troca
+        movem.l %d0-%d7/%a0-%a6,-(%sp)
 
+        move.l  current_task,%a0
+        move.l  %a0,%d0
+        tstl    %d0
+        beq.s   .yield_out              | scheduler ainda nao iniciou: so' volta
+
+        move.l  %sp,(%a0)               | tcb->sp = pilha desta task
+        jsr     OS_Schedule             | escolhe a proxima (acorda quem dormia), atualiza current_task
+        move.l  current_task,%a0
+        move.l  (%a0),%sp               | pilha vira a da task escolhida
+.yield_out:
+        movem.l (%sp)+,%d0-%d7/%a0-%a6
+        rte

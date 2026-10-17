@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <sys/rigel_dirent.h>
+#include <sys/scheduler.h>
+
 extern long sys_opendir(const char *path);              /* fsdir.c */
 extern long sys_readdir(long h, rigel_dirent_t *ent);
 extern long sys_closedir(long h);
@@ -36,6 +38,7 @@ extern void sys_fs_task_exit(int owner);
 
 extern int sys_spawn(const char *path, char **argv);   /* spawn.c */
 extern int OS_TaskAlive(int id);                       /* scheduler.c */
+extern void OS_SleepTicks(uint32_t ticks);
 extern uint8_t sys_getkey();
 
 extern uint32_t day_uptime;

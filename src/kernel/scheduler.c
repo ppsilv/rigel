@@ -12,6 +12,7 @@ tcb_t *current_task = NULL;
 
 static tcb_t task_pool[OS_MAX_TASKS];   /* armazenamento fixo dos TCBs -- sem malloc */
 extern void kernel_puts(const char *s) ;
+extern uint32_t systemTick;             /* +1 a cada 10 ms (OS_TickISR) */
 
 /*
  * ready_head: cabeca da fila circular de tarefas PRONTAS (TASK_READY
@@ -162,6 +163,8 @@ tcb_t *OS_TaskCreate(void (*entry)(void), void *arg, uint8_t *stack, uint32_t st
     tcb->arg        = arg;
     tcb->id         = id;
     tcb->next       = NULL;
+    tcb->sleeping   = 0;
+    tcb->wake_tick  = 0;
 
     uint8_t *sp = stack + stack_size;
     sp = (uint8_t *)((uintptr_t)sp & ~(uintptr_t)1);   /* pilha alinhada em word, exigencia do 68k */
@@ -199,7 +202,7 @@ void OS_TaskExit(void)
     irq_restore(sr);
 #ifndef OS_HOST_TEST
     for (;;)
-        ;   /* proxima interrupcao de timer escala outra tarefa; esta nunca mais volta */
+        OS_Yield();   /* sai da CPU na hora; esta tarefa nunca mais volta (nao esta' na fila) */
 #endif
 }
 
@@ -219,6 +222,7 @@ void OS_Reap(void)
             continue;                     /* ainda esta' na CPU; fica pro proximo reap */
         if (t->id >= OS_SLOT_ID_BASE)
             Slots_Free(t->id - OS_SLOT_ID_BASE);
+        t->sleeping = 0;
         t->state = TASK_UNUSED;
     }
     irq_restore(sr);
@@ -236,10 +240,29 @@ int OS_TaskAlive(int id)
     return 0;
 }
 
+/* acorda as tasks que dormem por OS_SleepTicks e ja cumpriram o tempo (chamada com IRQ mascarada) */
+static void wake_sleepers(void)
+{
+    uint32_t now = *(volatile uint32_t *)&systemTick;
+
+    for (int i = 0; i < OS_MAX_TASKS; i++) {
+        tcb_t *t = &task_pool[i];
+        if (t->state == TASK_BLOCKED && t->sleeping &&
+            (int32_t)(now - t->wake_tick) >= 0) {       /* conta certo mesmo na volta do contador */
+            t->sleeping = 0;
+            t->state    = TASK_READY;
+            ready_insert(t);
+        }
+    }
+}
+
 void OS_Schedule(void)
 {
+    wake_sleepers();
+
     if (ready_head == NULL)
-        return;   /* nenhuma tarefa pronta -- nao deveria acontecer em uso normal, mas nao trava */
+        return;   /* ninguem pronto: a task atual (se estiver dormindo) continua girando no laco do
+                     OS_SleepTicks ate o tick acordar alguem; nao trava */
 
     if (current_task && current_task->state == TASK_RUNNING)
         current_task->state = TASK_READY;
@@ -291,8 +314,38 @@ void OS_TaskWake(tcb_t *task)
 
     uint16_t sr = irq_save();
     if (task->state == TASK_BLOCKED) {
+        task->sleeping = 0;                /* acorda tambem quem dormia por tempo */
         task->state = TASK_READY;
         ready_insert(task);
     }
     irq_restore(sr);
+}
+
+/*
+ * A task atual sai da fila por 'ticks' ticks. O OS_Yield troca de contexto na hora (com a IRQ
+ * ainda mascarada, entao nao ha janela entre marcar "dormindo" e sair da CPU). Quando a task
+ * volta a rodar o escalonador ja a acordou (state RUNNING). Se NINGUEM mais estiver pronto, o
+ * OS_Schedule nao troca de task e o OS_Yield volta aqui com a task ainda BLOCKED: ela gira
+ * chamando OS_Yield (agora com IRQ liberada) ate o tick cumprir o tempo e acordar ela mesma.
+ */
+void OS_SleepTicks(uint32_t ticks)
+{
+    tcb_t *me = current_task;
+    uint16_t sr;
+
+    if (me == NULL || ticks == 0) {
+        OS_Yield();
+        return;
+    }
+
+    sr = irq_save();
+    me->wake_tick = *(volatile uint32_t *)&systemTick + ticks;
+    me->sleeping  = 1;
+    ready_remove(me);
+    me->state = TASK_BLOCKED;
+    OS_Yield();                            /* IRQ mascarada: troca atomica */
+    irq_restore(sr);
+
+    while (me->state == TASK_BLOCKED)      /* so' acontece se nao havia mais ninguem pronto */
+        OS_Yield();
 }

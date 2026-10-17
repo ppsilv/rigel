@@ -28,6 +28,8 @@ typedef struct tcb {
     uint8_t      *stack_base;
     uint32_t      stack_size;
     int           id;
+    uint32_t      wake_tick;   /* se 'sleeping': acorda quando systemTick chegar aqui */
+    uint8_t       sleeping;    /* 1 = bloqueada por OS_SleepTicks (o tick a acorda sozinho) */
 } tcb_t;
 
 /* current_task precisa ser global e visivel pro assembly (ctx_switch_*.s usa .extern current_task) */
@@ -58,14 +60,27 @@ void   OS_Reap(void);
  * esperando um evento externo -- assim o scheduler nem perde tempo
  * escalando ela enquanto ela nao tem nada pra fazer.
  *
- * LIMITACAO ATUAL: se a propria tarefa chamar isso em si mesma
- * (bloqueio voluntario), ela so vai realmente ceder a CPU no PROXIMO
- * tick do timer -- ainda nao existe um OS_Yield/trap pra forcar troca
- * de contexto imediata. Funciona, so nao e' instantaneo.
+ * Bloqueio voluntario (a task bloqueia a si mesma): logo depois de OS_TaskBlock chame OS_Yield()
+ * para sair da CPU na hora; sem isso ela so' cede no proximo tick. Para "dormir um tempo" use
+ * OS_SleepTicks, que ja faz tudo (bloqueia, cede e e' acordada pelo tick).
  */
 void   OS_TaskBlock(tcb_t *task);
 
 /* OS_TaskWake: devolve 'task' pra fila de prontas (ex: driver recebeu o dado esperado). */
 void   OS_TaskWake(tcb_t *task);
+
+/*
+ * OS_Yield: a task atual larga o resto da fatia AGORA (troca de contexto na hora, sem esperar o
+ * tick) e volta quando o round robin chegar nela de novo. Implementada em ctx_switch_68000.S.
+ * So' chame de dentro de uma task (modo supervisor), nunca de dentro do proprio OS_TickISR.
+ */
+void   OS_Yield(void);
+
+/*
+ * OS_SleepTicks(n): a task atual sai do round robin por 'n' ticks (10 ms cada) e e' acordada
+ * pelo escalonador quando o tempo acabar. Enquanto dorme nao gasta CPU. n = 0 equivale a OS_Yield.
+ * "Dormir 1 tick" = esperar o proximo tick (substitui o laco "while (systemTick == t);").
+ */
+void   OS_SleepTicks(uint32_t ticks);
 
 #endif

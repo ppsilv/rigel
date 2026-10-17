@@ -94,8 +94,11 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
 #ifdef TRAP_DIAG
         kernel_puts("\n[kernel] WAITPID pid="); kernel_puthex((uint32_t)a1); kernel_puts("\n");
 #endif
-        while (OS_TaskAlive((int)a1))
-            ;                     /* o tick preempta; o filho continua rodando */
+        /* o tick preempta; o filho continua rodando */
+        while (OS_TaskAlive((int)a1)){
+            OS_SleepTicks(1);
+        }
+            
 #ifdef TRAP_DIAG
         kernel_puts("\n[kernel] WAITPID terminou\n");
 #endif
@@ -123,7 +126,7 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_FFINDFIRST: return sys_findfirst((const char *)a1, (const char *)a2, (rigel_dirent_t *)a3);
     case SYS_FFINDNEXT:  return sys_findnext(a1, (rigel_dirent_t *)a2);
     case SYS_GETKBDKEY:  return sys_getkey();
-    case SYS_HASKEY:     return sys_haskey();
+    case SYS_HASKEY:     return -1; //sys_haskey();
     case SYS_GETUPTIME: return day_uptime;
     case SYS_SLEEP:     return sys_sleep(a1);      /* a1 = milissegundos */
     case SYS_YIELD:     return sys_yield();
@@ -149,27 +152,17 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_CONNECT:    return sys_connect(a1, (const void *)a2, a3);
     case SYS_SETSOCKOPT: return sys_setsockopt(a1, a2, a3, (const void *)a4, a5);
 
-    case SYS_DRAWVLINE:  return -1;
-    case SYS_DRAWHLINE:  return -1;
-    case SYS_DRAWLINE:   return -1;
-    case SYS_DRAWCIRCLE: return -1;
-    case SYS_DRAWCIRCLEHELPER: return -1;
-    case SYS_FILLCIRCLE:       return -1;
-    case SYS_FILLCIRCLEHELPER: return -1;
-    case SYS_DRAWROUNDRECT:    return -1;
-    case SYS_FILLROUNDRECT:    return -1;
-    case SYS_FILLRECT:         return -1;
 
-    case SYS_DRAWVLINE          return -1;
-    case SYS_DRAWHLINE          return -1;
-    case SYS_DRAWLINE           return -1;
-    case SYS_DRAWCIRCLE         return -1;
-    case SYS_DRAWCIRCLEHELPER   return -1;
-    case SYS_FILLCIRCLE         return -1;
-    case SYS_FILLCIRCLEHELPER   return -1;
-    case SYS_DRAWROUNDRECT      return -1;
-    case SYS_FILLROUNDRECT      return -1;
-    case SYS_FILLRECT           return -1;
+    case SYS_DRAWVLINE:          return -1;
+    case SYS_DRAWHLINE:          return -1;
+    case SYS_DRAWLINE:           return -1;
+    case SYS_DRAWCIRCLE:         return -1;
+    case SYS_DRAWCIRCLEHELPER:   return -1;
+    case SYS_FILLCIRCLE:         return -1;
+    case SYS_FILLCIRCLEHELPER:   return -1;
+    case SYS_DRAWROUNDRECT:      return -1;
+    case SYS_FILLROUNDRECT:      return -1;
+    case SYS_FILLRECT:           return -1;
 
 
 

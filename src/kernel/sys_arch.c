@@ -1,10 +1,9 @@
 /*
  * sys_arch.c -- porta do lwIP (NO_SYS = 0) para o kernel Rigel.
  *
- * Como o kernel e' round robin com tick de 10 ms e ainda nao tem bloqueio
- * "de verdade" (OS_Yield), toda espera aqui e' por polling: a task confere
- * a condicao e, se nao deu, espera o proximo tick (quando o escalonador
- * troca de task). Isso e' o mesmo estilo do sys_sleep/waitpid do kernel.
+ * Como o kernel e' round robin com tick de 10 ms, toda espera aqui e' por polling:
+ * a task confere a condicao e, se nao deu, dorme ate o proximo tick (OS_SleepTicks),
+ * sem gastar a fatia girando. Isso e' o mesmo estilo do sys_sleep/waitpid do kernel.
  *
  * Todas as estruturas sao protegidas mascarando interrupcoes por instantes.
  */
@@ -49,12 +48,10 @@ static inline uint32_t now_tick(void)
     return *(volatile uint32_t *)&systemTick;
 }
 
-/* larga o resto da fatia: espera o proximo tick */
+/* larga o resto da fatia: dorme ate o proximo tick (nao gasta CPU enquanto espera) */
 static void wait_tick(void)
 {
-    uint32_t t = now_tick();
-    while (now_tick() == t)
-        ;
+    OS_SleepTicks(1);
 }
 
 /* ================================================================

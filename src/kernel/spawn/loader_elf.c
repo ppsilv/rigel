@@ -136,9 +136,9 @@ int load_elf_spawn(FIL *fd, int argc, char *argv[], int *pid)
         goto fail;
     }
 
-    kprintf("slot=%02d base=0x%08lx size=0x%lx relocs=%lu entry=0x%08lx\n",
-            slot, (unsigned long)task_base, (unsigned long)image_size,
-            (unsigned long)applied, (unsigned long)(task_base + entry));
+    //kprintf("slot=%02d base=0x%08lx size=0x%lx relocs=%lu entry=0x%08lx\n",
+    //        slot, (unsigned long)task_base, (unsigned long)image_size,
+    //        (unsigned long)applied, (unsigned long)(task_base + entry));
 
     {
         void (*entry_fn)(void) = (void (*)(void))(task_base + entry);

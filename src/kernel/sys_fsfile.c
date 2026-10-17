@@ -238,7 +238,7 @@ long sys_fstat(const char *path, rigel_dirent_t *ent)
 long sys_chmod(const char *path, long attrs)
 {
 #if FF_USE_CHMOD && !FF_FS_READONLY && FF_FS_MINIMIZE == 0
-    const BYTE all = AM_RDO | AM_HID | AM_SYS | AM_ARC;
+    const BYTE all = AM_RDO | AM_HID | AM_SYS | AM_ARC | 0xC0;
     if (path == NULL) return -1;
     return (f_chmod(path, (BYTE)(attrs & all), all) == FR_OK) ? 0 : -1;
 #else

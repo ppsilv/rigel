@@ -12,9 +12,11 @@
  *   h = HID (oculto)
  *   s = SYS (sistema)
  *   a = ARC (arquivo - "modificado desde o ultimo backup")
+ *   d = bit 6 (dispositivo)
+ *   l = bit 7 (link)
  *
- * A coluna mostrada e' DLRHSA (D e L sao os bits 6 e 7: dispositivo e link; so' aparecem,
- * a syscall de chmod do kernel altera apenas R, H, S e A).
+ * A coluna mostrada e' DLRHSA. Para gravar d e l o kernel (sys_fsfile.c) e o f_chmod do
+ * FatFS precisam deixar passar os bits 6 e 7 (use o patch_chmod_dl.py).
  * ============================================================ */
 
 #include <stdint.h>
@@ -36,6 +38,8 @@ typedef struct {
 } attr_map_t;
 
 static const attr_map_t ATTR_TABLE[] = {
+    { 'd', RIGEL_ATTR_DEV },
+    { 'l', RIGEL_ATTR_LNK },
     { 'r', RIGEL_ATTR_RDO },
     { 'h', RIGEL_ATTR_HID },
     { 's', RIGEL_ATTR_SYS },
@@ -73,7 +77,7 @@ static int show_attr(const char *path)
 
 /* Interpreta uma string tipo "+r-h+s" e preenche 'set_mask'
  * (bits a ligar) e 'clr_mask' (bits a desligar).
- * Retorna 0 se a string era valida (so +/- seguidos de rhsa). */
+ * Retorna 0 se a string era valida (so +/- seguidos de r h s a d l). */
 static int parse_flag_arg(const char *arg, uint8_t *set_mask, uint8_t *clr_mask)
 {
     char sinal = 0;
@@ -123,7 +127,7 @@ int main(int argc, char *argv[])
     int i;
 
     if (argc < 2) {
-        printf("Uso: chmod [+r|-r] [+h|-h] [+s|-s] [+a|-a] arquivo\n");
+        printf("Uso: chmod [+r|-r] [+h|-h] [+s|-s] [+a|-a] [+d|-d] [+l|-l] arquivo\n");
         printf("     chmod arquivo            (mostra atributos atuais)\n");
         return 1;
     }
@@ -162,13 +166,13 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    /* A syscall grava R, H, S e A de uma vez: le os atuais, aplica as mudancas e grava. */
+    /* A syscall grava os 6 atributos de uma vez: le os atuais, aplica as mudancas e grava. */
     if (rigel_stat((char *)path, &e) != 0) {
         printf("chmod: nao foi possivel acessar '%s'\n", path);
         return 1;
     }
     novo = (uint8_t)((e.attr | set_mask) & (uint8_t)~clr_mask);
-    novo &= (RIGEL_ATTR_RDO | RIGEL_ATTR_HID | RIGEL_ATTR_SYS | RIGEL_ATTR_ARC);
+    novo &= (RIGEL_ATTR_DEV | RIGEL_ATTR_LNK | RIGEL_ATTR_RDO | RIGEL_ATTR_HID | RIGEL_ATTR_SYS | RIGEL_ATTR_ARC);
 
     if (rigel_chmod((char *)path, novo) != 0) {
         printf("chmod: erro ao alterar atributo(s) de '%s'\n", path);

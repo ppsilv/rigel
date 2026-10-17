@@ -1,0 +1,28 @@
+
+No seu 68000 o shell também roda bem, desde que as outras 
+tasks parem de girar à toa. Essa é a correção estrutural: 
+trocar o wait_tick() por um bloqueio real, em que a task 
+que espera sai da lista do escalonador até o evento acontecer, 
+ou pelo menos devolve a fatia com um yield. O custo seria 
+pequeno, e o shell voltaria a ter quase toda a CPU quando 
+a rede estivesse parada. Não é urgente, mas fica como melhoria 
+futura para o kernel.
+
+Não é difícil nem caro. Dá para fazer em dois passos, e o primeiro já resolve quase tudo.
+
+Passo 1: tasks que esperam deixam de gastar CPU (o principal)
+
+Cada task ganha um campo wake_tick no TCB: “só me execute a partir deste tick”.
+Uma função OS_SleepTicks(n) marca o wake_tick e entrega a CPU. O escalonador pula as tasks que ainda estão dormindo. Se todas dormem, ele roda uma pequena task ociosa.
+O wait_tick() do sys_arch.c, o laço do rx_thread no driver, o sleep e o waitpid passam a usar OS_SleepTicks(1).
+Resultado: tcpip e w5100rx acordam a cada 10 ms, trabalham uns microssegundos e voltam a dormir. O shell fica com quase toda a CPU quando a rede está parada. A latência do ping deve continuar a mesma, perto de 40 ms.
+Esforço: uns 30 a 50 linhas no escalonador e uma troca de chamadas nos outros arquivos. Eu escrevo tudo e entrego completo, e você só testa.
+
+Passo 2: bloqueio por evento (opcional, mais para frente)
+
+A task fica “bloqueada” numa fila até o evento acordá-la (chegada de dado, fim de uma operação), em vez de olhar de tempos em tempos.
+Isso exigiria mexer no lwIP e no driver para acordar as tasks. O ganho em cima do passo 1 é pequeno, a não ser que você use a interrupção do W5100 para baixar a latência. Não vale a pena agora.
+
+Risco do passo 1: o escalonador é o coração do sistema. Um erro nele trava tudo, e por isso ele deve ser testado com cuidado, mas a mudança é pequena e fácil de reverter.
+
+Se quiser que eu faça o passo 1, mande: scheduler.c, scheduler.h, o arquivo onde ficam o OS_TickISR e a troca de contexto (o ctx_switch_68000.S) e o sys_proc.c (onde estão sleep e waitpid). Com eles eu vejo o TCB, como o escalonador escolhe a próxima task e onde entra a task ociosa.

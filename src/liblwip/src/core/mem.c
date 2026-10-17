@@ -236,7 +236,7 @@ mem_free(void *rmem)
  * @return a pointer to the allocated memory or NULL if the pool is empty
  */
 void *
-mem_malloc238(mem_size_t size)
+mem_malloc(mem_size_t size)
 {
   void *ret;
   struct memp_malloc_helper *element = NULL;
@@ -816,7 +816,7 @@ mem_trim(void *rmem, mem_size_t new_size)
  * Note that the returned value will always be aligned (as defined by MEM_ALIGNMENT).
  */
 void *
-mem_malloc818(mem_size_t size_in)
+mem_malloc(mem_size_t size_in)
 {
   mem_size_t ptr, ptr2, size;
   struct mem *mem, *mem2;

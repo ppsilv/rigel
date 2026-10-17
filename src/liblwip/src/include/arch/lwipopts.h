@@ -10,8 +10,20 @@
 #define SYS_LIGHTWEIGHT_PROT        1
 #define LWIP_TCPIP_CORE_LOCKING     0
 #define MEM_ALIGNMENT               2          /* 68000: acesso de 16/32 bits precisa de endereco par */
-/* Toda a memoria do lwIP sai do heap do kernel (kmalloc), nao do .bss: o .bss nao cabe na regiao KERNEL */
+/* Memoria do lwIP.
+ * RIGEL_LWIP_OWN_HEAP 1: o lwIP usa o heap dele (mem.c), de MEM_SIZE bytes, reservado UMA vez do kmalloc
+ *                        na partida; o kmalloc nao mexe nos pbufs/pcbs. (teste para isolar problema no kmalloc)
+ * RIGEL_LWIP_OWN_HEAP 0: cada alocacao do lwIP vai para o kmalloc (versao anterior). */
 #include <stddef.h>
+#define RIGEL_LWIP_OWN_HEAP         1
+#if RIGEL_LWIP_OWN_HEAP
+#define MEM_LIBC_MALLOC             0
+#define MEMP_MEM_MALLOC             1
+#define MEM_SIZE                    (64 * 1024)
+void *rigel_lwip_heap(void);
+#define LWIP_RAM_HEAP_POINTER       rigel_lwip_heap()
+#define LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT 1   /* protege o heap mascarando IRQ (sem mutex) */
+#else
 void *rigel_malloc(size_t n);
 void  rigel_free(void *p);
 void *rigel_calloc(size_t count, size_t size);
@@ -20,6 +32,7 @@ void *rigel_calloc(size_t count, size_t size);
 #define mem_clib_malloc             rigel_malloc
 #define mem_clib_free               rigel_free
 #define mem_clib_calloc             rigel_calloc
+#endif
 
 /* ---- API ---- */
 #define LWIP_NETCONN                1

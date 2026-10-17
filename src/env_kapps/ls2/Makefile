@@ -1,50 +1,38 @@
-CC = m68k-elf-gcc
-LD = m68k-elf-ld
-OBJCOPY = m68k-elf-objcopy
+# Makefile do ls.elf (app do Rigel).
+# Uso:   make          -> gera ls.elf
+#        make clean
+#
+# Ajuste so' RIGELDIR se o projeto estiver em outro lugar.
+# Se o seu linker nao achar a newlib (erro "cannot find -lc"), ponha em NEWLIB_LIB
+# a pasta onde esta o libc.a do m68000, ex.:  make NEWLIB_LIB=/opt/newlib/m68k-elf/lib/m68000
 
-ORIONCOR_DIR=../../..
-SYS_ROOT=../../../../..
-APP = ls2
+LIBRIGEL  := $(RIGELDIR)/src/librigel
+NEWLIB_LIB ?= $(RIGELDIR)/lib
 
+CROSS := m68k-elf-
+CC    := $(CROSS)gcc
 
-CFLAGS  := -m68000 -D __68000__  -Wall -Os -ffreestanding -fomit-frame-pointer \
-           -ffunction-sections -fdata-sections -Wl,--strip-debug \
+# librigel/include vem ANTES (headers gerados, os atuais)
+CFLAGS  := -m68000 -Wall -Os -ffreestanding -fomit-frame-pointer \
+           -ffunction-sections -fdata-sections \
            -I $(LIBRIGEL)/include  -I$(RIGELDIR)/include -D_PRINTF_FLOAT_NOT_FOUND \
 		   -include lixo/fix_winnt.h
-
-LDFLAGS := -m68000 -nostartfiles -T $(LIBRIGEL)/lib/app.ld -Wl,-q -Wl,--strip-debug -Wl,--gc-sections \
+		   
+# -Wl,-q = guarda as relocacoes (o loader do kernel precisa delas)
+# NAO use -s / strip no .elf
+LDFLAGS := -m68000 -nostartfiles -T $(LIBRIGEL)/lib/app.ld -Wl,-q -Wl,--gc-sections \
            -L $(LIBRIGEL)/lib $(if $(NEWLIB_LIB),-L $(NEWLIB_LIB))
 LDLIBS  := -Wl,--start-group -lrigel -lc -lgcc -Wl,--end-group
 
+all: ls.elf
 
-
-SRCS = $(APP).c \
-../../apps_libs/fatfs/ff.c \
-../../apps_libs/fatfs/ffsystem.c \
-../../apps_libs/fatfs/ffunicode.c \
-../../apps_libs/ide/ata.c \
-../../apps_libs/picoVga/drv_picoVga.c \
-../../apps_libs/ide/diskio.c
-
-OBJS = $(SRCS:.c=.o)
-ELFS = $(SRCS:.c=.elf)
-BINS = $(SRCS:.c=.bin)
-
-.PHONY: all clean
-
-all: $(APP).bin
-%.o: %.c
+ls.o: ls.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Regra específica para cada arquivo para evitar problemas com $<
-$(APP).elf: $(OBJS)
-	$(LD) $(LDFLAGS) $(OBJS) -o $@ $(LDLIBS)
-	@echo "Linked: $@"
-
-%.bin: %.elf
-	$(OBJCOPY) -O binary $< $@
-	@echo "Binary: $@"
+ls.elf: ls.o $(LIBRIGEL)/lib/crt0_app.o $(LIBRIGEL)/lib/librigel.a
+	$(CC) $(LDFLAGS) $(LIBRIGEL)/lib/crt0_app.o ls.o $(LDLIBS) -o $@
 
 clean:
-	rm -f $(OBJS) $(ELFS) $(BINS) *.lst
-	@echo "Clean complete"
+	rm -f ls.o ls.elf
+
+.PHONY: all clean

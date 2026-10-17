@@ -242,8 +242,8 @@ static void rx_thread(void *arg)
     for (;;) {
         /* a cada ~30 s avisa se alguma pilha de thread esta quase cheia; aos ~60 s mostra todas */
         n++;
-        if (n % 3000 == 0)  rigel_stack_report(0);         /* a cada ~30 s: so' se alguma pilha estiver baixa */
-        if (n == 6000)      rigel_stack_report(1);         /* uma unica vez, aos ~60 s: mostra todas */
+        //if (n % 3000 == 0)  rigel_stack_report(0);         /* a cada ~30 s: so' se alguma pilha estiver baixa */
+        //if (n == 6000)      rigel_stack_report(1);         /* uma unica vez, aos ~60 s: mostra todas */
         if (n >= 360000)    n = 6001;                      /* evita estouro do contador; nao repete o relatorio */
 
         while ((p = low_level_input()) != NULL) {

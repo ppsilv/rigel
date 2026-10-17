@@ -184,7 +184,7 @@ int kernel_main(){
     //kmalloc_init((void*)0x92000, 0x8000); ERRO FEIO PORQUE TEM VALOR CHUMBADO ESTÁTICAMENTE
     kmalloc_init(__heap_start, (uint32_t)(__heap_end - __heap_start));
 
-    kernel_puts("Rigel 0.10 kernel 0.101\n");
+    kernel_puts("Rigel 0.10 kernel 0.102\n");
     do_ideinit(0,NULL);
 
    kernel_puts("Ring buffer init\n");
@@ -201,14 +201,14 @@ int kernel_main(){
     sys_setramvector(0x000800b4,(uint32_t)trap0_entry);
     sys_setramvector(0x00080090,(uint32_t)OS_TickISR);
     sys_setramvector(0x00080096,(uint32_t)Int3Handler);
-    sys_setramvector(0x00080008, (uint32_t)exc_bus_error);
-    sys_setramvector(0x0008000C, (uint32_t)exc_address_error);
-    sys_setramvector(0x00080010, (uint32_t)exc_illegal);
-    sys_setramvector(0x00080014, (uint32_t)exc_div0);
-    sys_setramvector(0x00080020, (uint32_t)exc_priv);
-    sys_setramvector(0x0008001C, (uint32_t)exc_trapv);
-    sys_setramvector(0x00080028, (uint32_t)exc_linea);
-    sys_setramvector(0x0008002C, (uint32_t)exc_linef);
+    sys_setramvector(0x00080008,(uint32_t)exc_bus_error);
+    sys_setramvector(0x0008000C,(uint32_t)exc_address_error);
+    sys_setramvector(0x00080010,(uint32_t)exc_illegal);
+    sys_setramvector(0x00080014,(uint32_t)exc_div0);
+    sys_setramvector(0x00080020,(uint32_t)exc_priv);
+    sys_setramvector(0x0008001C,(uint32_t)exc_trapv);
+    sys_setramvector(0x00080028,(uint32_t)exc_linea);
+    sys_setramvector(0x0008002C,(uint32_t)exc_linef);
 
     for(int i=0;i<0xFFFF; i++){
         volatile int j = 0; 
@@ -216,14 +216,14 @@ int kernel_main(){
     }
     UNLOCK(saved_sr);
 
-    kernel_puts("Initializing ethernet\n ");
+    kernel_puts("Initializing ethernet\n");
     if( rigel_net_start() ){
-        kernel_puts("Initializing ethernet FAILED...\n ");
+        kernel_puts("Initializing ethernet FAILED...\n");
     }else{
-        kernel_puts("Initializing ethernet SUCCESS...\n ");
+        kernel_puts("Eethernet SUCCESS initialized...\n");
     }
 
-    kernel_puts("Loading process #1 init\n ");
+    kernel_puts("Loading process #1 init\n");
 
     run_scheduler_test2();
 

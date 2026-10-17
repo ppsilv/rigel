@@ -78,6 +78,23 @@ void rigel_free(void *p)
     irq_restore(sr);
 }
 
+#if RIGEL_LWIP_OWN_HEAP
+/* area do heap proprio do lwIP (chamada uma vez, por mem_init); vem do kmalloc */
+void *rigel_lwip_heap(void)
+{
+    static void *h;
+    if (h == NULL) {
+        h = kmalloc((size_t)MEM_SIZE + 64);
+        if (h == NULL) {
+            extern void kernel_puts(const char *s);
+            kernel_puts("lwIP: sem memoria para o heap\r\n");
+            for (;;) ;
+        }
+    }
+    return h;
+}
+#endif
+
 void *rigel_calloc(size_t count, size_t size)
 {
     size_t n = count * size;

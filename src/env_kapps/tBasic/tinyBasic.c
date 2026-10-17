@@ -1,8 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <vga_video.h>
-#include <color.h>
-#include <vga_video_graphics.h>
 
 #define RUN_CMD        (*((volatile unsigned char *)(0x00FF8000 + 0x3D)))
 
@@ -14,6 +11,7 @@
 #   include <dirent.h>
 #   include <sys/stat.h>
 #elif __68000__
+#   include <rigel/rigel.h>
 #else
 #   error Needs fixing to compile on your system
 #endif
@@ -52,11 +50,11 @@ void loop( void );
 int main( int argc, char ** argv )
 {
     RUN_CMD = 0xA4;
-    setcolor(4,0);
+    rigel_settextcolor(4,0);
     printf( "\nTinyBasic pgordao @copyleft V1.1 2026...\n" );
     printf( "Compiled for Orion68 cpu MC68000.\n" );
     //setup();
-    setcolor(2,0);
+    rigel_settextcolor(2,0);
     loop();
     printf("Exiting tBasic...\n");
 }

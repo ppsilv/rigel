@@ -9,7 +9,7 @@ extern "C" {
 long rigel_vga_putchar(long c);
 long rigel_gotoxy(long x, long y);
 long rigel_gohome(void);
-long rigel_settextcolor(long color);
+long rigel_settextcolor(long color,long bgcolor);
 long rigel_clrscr(void);
 long rigel_drawvline(long x, long y, long h, long color);
 long rigel_drawhline(long x, long y, long w, long color);

@@ -26,3 +26,19 @@ Isso exigiria mexer no lwIP e no driver para acordar as tasks. O ganho em cima d
 Risco do passo 1: o escalonador é o coração do sistema. Um erro nele trava tudo, e por isso ele deve ser testado com cuidado, mas a mudança é pequena e fácil de reverter.
 
 Se quiser que eu faça o passo 1, mande: scheduler.c, scheduler.h, o arquivo onde ficam o OS_TickISR e a troca de contexto (o ctx_switch_68000.S) e o sys_proc.c (onde estão sleep e waitpid). Com eles eu vejo o TCB, como o escalonador escolhe a próxima task e onde entra a task ociosa.
+
+# Já tenho esses:
+• ls: Lista arquivos e diretórios.
+• cp, mv, rm: Copiam, movem e removem arquivos.
+• cat, head, tail: Exibem o conteúdo de arquivos.
+• chmod, chown: Alteram permissões e proprietários
+• mkdir / rmdir: Cria e remove diretórios.
+• pwd: Mostra o diretório atual onde você está.
+• touch: Cria arquivos vazios ou altera a data de modificação.
+
+# Criar esses:
+•   mv:  movem  arquivos.
+•   head, tail: Exibem o conteúdo de arquivos.
+•   ln: Cria links (atalhos) rígidos ou simbólicos.
+•   kill: Envia sinais para encerrar processos.
+•   ps: lista processos rodando

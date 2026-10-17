@@ -12,7 +12,7 @@ CFLAGS  := $(CPU) -Wall -Os -ffreestanding -Wl,--strip-debug -fomit-frame-pointe
 -I $(RIGELDIR)/src/librigel/include \
 -I $(RIGELDIR)/src/kernel/include
 
-#LINKER_FILE := $(RIGELDIR)/src/librigel/linker
+
 LINKER_FILE := $(RIGELDIR)/src/librigel/lib/app.ld
 
 CRT0_FILE   := $(RIGELDIR)/src/librigel/lib/crt0_app.o

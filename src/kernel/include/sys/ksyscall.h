@@ -91,7 +91,7 @@
 #define SYS_SOCKET             0x0053 
 
 #define SYS_GETUPTIME          0x1050
-
+#define SYS_HASKEY             0x1051 
  
 
 

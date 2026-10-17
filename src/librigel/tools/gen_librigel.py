@@ -70,7 +70,7 @@ TABLE = [
   ("VGAPUTCHAR", "vga", "vga_putchar", "long c"),
   ("GOTOXY",     "vga", "gotoxy",      "long x, long y"),
   ("GOHOME",     "vga", "gohome",      "void"),
-  ("SETTEXTCOLOR","vga","settextcolor","long color"),
+  ("SETTEXTCOLOR","vga","settextcolor","long color,long bgcolor"),
   ("CLRSCR",     "vga", "clrscr",      "void"),
   ("DRAWVLINE",  "vga", "drawvline",   "long x, long y, long h, long color"),
   ("DRAWHLINE",  "vga", "drawhline",   "long x, long y, long w, long color"),
@@ -117,6 +117,7 @@ TABLE = [
   ("ACCEPT",     "net", "accept",     "long fd, void *addr, long *len"),
   ("SETSOCKOPT", "net", "setsockopt", "long fd, long level, long opt, const void *val, long len"),
 
+  ("HASKEY", "kbd", "haskey",  "void"),
   ("GETKBDKEY", "kbd", "getkbdkey",  "void"),
   ("GETUPTIME", "proc", "getuptime",  "void"),  
   

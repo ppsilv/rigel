@@ -6,6 +6,7 @@
 extern "C" {
 #endif
 
+long rigel_haskey(void);
 long rigel_getkbdkey(void);
 
 #ifdef __cplusplus

@@ -22,11 +22,10 @@
 ******************************************************************/
 #include <stdio.h>
 #include <stddef.h>
-#include  <string.h>
-#include <vga_video.h>
-#include <color.h>
-#include <vga_video_graphics.h>
+#include <string.h>
 #include <stdint.h>
+#include <unistd.h>
+#include <rigel/rigel.h> 
 
 #define NULL 0
 
@@ -1449,12 +1448,12 @@ tbsetcolor:
     uint8_t bgcolor = expression(); /* Avalia a 2ª expressão (Y) */
     if(expression_error) goto qwhat;
 
-    setcolor(txtcolor,bgcolor);
+    rigel_settextcolor(txtcolor,bgcolor);
 
   goto run_next_statement;
 
 tbsethome:
-  gohome();
+  rigel_gohome();
   goto run_next_statement;
 
 tbline:
@@ -1501,7 +1500,7 @@ tbline:
     if(expression_error) goto qwhat;
     // check for a comma
 
-  drawLine( x0,  y0,  x1,  y1,  color);
+  rigel_drawline( x0,  y0,  x1,  y1,  color);
   goto run_next_statement;
 
 tbvline:
@@ -1539,7 +1538,7 @@ tbvline:
     if(expression_error) goto qwhat;
     // check for a comma
 
-  drawVLine( x0,  y0,  h,  color);
+  rigel_drawvline( x0,  y0,  h,  color);
   goto run_next_statement;
 }
 tbhline:
@@ -1577,7 +1576,7 @@ tbhline:
     if(expression_error) goto qwhat;
     // check for a comma
 
-  drawHLine( x0,  y0,  w,  color);
+  rigel_drawhline( x0,  y0,  w,  color);
   goto run_next_statement;
 }
 tbcircle:
@@ -1614,7 +1613,7 @@ tbcircle:
     uint8_t color = expression(); /* Avalia a 4ª expressão (color) */
     if(expression_error) goto qwhat;
 
-  drawCircle( x0,  y0,  r,  color);
+  rigel_drawcircle( x0,  y0,  r,  color);
   goto run_next_statement;
 }
 tbcirclehelper:
@@ -1660,7 +1659,7 @@ tbcirclehelper:
     uint8_t color = expression(); /* Avalia a 5ª expressão (X) */
     if(expression_error) goto qwhat;
 
-    drawCircleHelper( x0, y0, r, cornername, color);
+    rigel_drawcirclehelper( x0, y0, r, cornername, color);
     goto run_next_statement;
 }
 tbfillcircle:
@@ -1697,7 +1696,7 @@ tbfillcircle:
     uint8_t color = expression(); /* Avalia a 4ª expressão (color) */
     if(expression_error) goto qwhat;
 
-    fillCircle(  x0,   y0,   r,   color);
+    rigel_fillcircle(  x0,   y0,   r,   color);
     goto run_next_statement;
 }
 tbfillcirclehelper:
@@ -1753,7 +1752,7 @@ tbfillcirclehelper:
     if(expression_error) goto qwhat;
 
 
-    fillCircleHelper( x0, y0, r, cornername, delta, color);
+    rigel_fillcirclehelper( x0, y0, r, cornername, delta, color);
     goto run_next_statement;
 }
 tbdrawRoundRect:
@@ -1809,7 +1808,7 @@ tbdrawRoundRect:
     if(expression_error) goto qwhat;
 
 
-    drawRoundRect( x0, y0, w, h, r, color);
+    rigel_drawroundrect( x0, y0, w, h, r, color);
     goto run_next_statement;
 }
 tbfillRoundRect:
@@ -1865,7 +1864,7 @@ tbfillRoundRect:
     if(expression_error) goto qwhat;
 
 
-    fillRoundRect( x0, y0, w, h, r, color);
+    rigel_fillroundrect( x0, y0, w, h, r, color);
     goto run_next_statement;
 }
 tbfillRect:
@@ -1911,7 +1910,7 @@ tbfillRect:
     uint8_t color = expression(); /* Avalia a 6ª expressão (X) */
     if(expression_error) goto qwhat;
 
-    fillRect( x0, y0, w, h, color);
+    rigel_fillrect( x0, y0, w, h, color);
     goto run_next_statement;
 }
 tbdate:
@@ -1936,7 +1935,7 @@ tbdate:
     if(expression_error) goto qwhat;
 
     /* Aqui você aplica no seu hardware/display */
-    gotoxy(x, y);
+    rigel_gotoxy(x, y);
 
     goto run_next_statement;
 
@@ -2545,17 +2544,16 @@ rseed:
   }
 
 }
-#include <orion_rtc.h>
 
-rtc_time_t t;
+//rtc_time_t t;
 void read_date(){
-  sys_rtc_read_time( &t);
-  printf("seg :%02x\n",t.sec);
-  printf("min :%02x\n",t.min);
-  printf("hour:%02x\n",t.hour);
-  printf("mday:%02x\n",t.mday);
-  printf("mon :%02x\n",t.mon);
-  printf("year:%02x\n",t.year);
+  //sys_rtc_read_time( &t);
+  //printf("seg :%02x\n",t.sec);
+  //printf("min :%02x\n",t.min);
+  //printf("hour:%02x\n",t.hour);
+  //printf("mday:%02x\n",t.mday);
+  //printf("mon :%02x\n",t.mon);
+  //printf("year:%02x\n",t.year);
 }
 
 // Copia o nome do arquivo da linha de comando para o buffer
@@ -2732,10 +2730,12 @@ static unsigned char breakcheck(void)
 static unsigned char breakcheck(void)
 {
   int got;
-    if( kbdhit()){
+    if( ! rigel_haskey()){
       return 0;
     }
-    got = getchar();
+    rigel_ioctl(0, TIOC_SETMODE, (void *)(long)(TTY_RAW | TTY_NOECHO));
+    if (read(0, &got, 1) != 1)
+    rigel_ioctl(0, TIOC_SETMODE, (void *)0);   /* restaura modo normal */
     if ( got < 255) {
         if ( got == CTRLC) {
             return 1;

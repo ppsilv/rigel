@@ -1,46 +1,49 @@
-CROSS := m68k-elf-
-CC    := $(CROSS)gcc
-OBJCOPY = m68k-elf-objcopy
+# Makefile do Rigel
+CROSS   ?= m68k-elf-
+CC      := $(CROSS)gcc
+OBJCOPY := $(CROSS)objcopy
+SIZE    := $(CROSS)size
 
-LIBRIGEL  := $(RIGELDIR)/src/librigel
-NEWLIB_LIB ?= $(RIGELDIR)/lib
 
-#CFLAGS = -Wall -Os -Wa,-adhln=tinyBasic.lst -I../../include -ffreestanding -nostdlib -D __68000__ -D ALIGN_MEMORY
-CFLAGS  := -m68000 -Wall -Os -ffreestanding -fomit-frame-pointer -D __68000__ -D ALIGN_MEMORY -Wa,-adhln=tinyBasic.lst \
-           -ffunction-sections -fdata-sections \
-           -I $(LIBRIGEL)/include -I$(RIGELDIR)/include
+CPU     ?= -m68000
+CFLAGS  := $(CPU) -Wall -Os -ffreestanding -Wl,--strip-debug -fomit-frame-pointer -D__68000__ -ffunction-sections -fdata-sections -include lixo/fix_winnt.h\
+-I $(RIGELDIR)/include \
+-I $(RIGELDIR)/src/kernel/include \
+-I $(RIGELDIR)/src/librigel/include \
+-I $(RIGELDIR)/src/kernel/include
 
-# -Wl,-q = guarda as relocacoes (o loader do kernel precisa delas)
-# NAO use -s / strip no .elf
-LDFLAGS := -m68000 -nostartfiles -T $(LIBRIGEL)/lib/app.ld -Wl,-q -Wl,--gc-sections \
-           -L $(LIBRIGEL)/lib $(if $(NEWLIB_LIB),-L $(NEWLIB_LIB))
-LDLIBS  := -Wl,--start-group -lrigel -lc -lgcc -Wl,--end-group
+
+LINKER_FILE := $(RIGELDIR)/src/librigel/lib/app.ld
+
+CRT0_FILE   := $(RIGELDIR)/src/librigel/lib/crt0_app.o
+
+LDFLAGS := $(CPU) -Wl,-q -T $(LINKER_FILE) -nostartfiles -Wl,--gc-sections -Wl,-Map=rigel.map  -Wl,--undefined=do_load
+LDLIBS  := -L$(RIGELDIR)/lib -L$(RIGELDIR)/lib/rigel -Wl,--start-group -lrigel -lc -lgcc -Wl,--end-group
 
 SRCS = $(wildcard *.c)
 OBJS = $(SRCS:.c=.o)
 ELFS = $(SRCS:.c=.elf)
 BINS = $(SRCS:.c=.bin)
 
-.PHONY: all clean
+APP = tbasic
 
-#all: $(BINS)
-all: tBasic.bin
+.PHONY: all clean size
+
+all: $(APP).bin size
+
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Regra específica para cada arquivo para evitar problemas com $<
-tBasic.elf: tinyBasic.o TinyBasicPlus.o ../../libc/obj/crt0.o ../../libc/obj/startup.o
-	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LDLIBS)
+$(APP).elf: $(OBJS) 
+	$(CC) $(LDFLAGS) $(CRT0_FILE) $(OBJS) -o $@ $(LDLIBS)
+	m68k-elf-size -A $(APP).elf
 	@echo "Linked: $@"
 
-test.elf: test.o ../../obj/crt0.o
-	$(CC) $(LDFLAGS) ../../obj/crt0.o test.o -lmc68000 -o $@
-	@echo "Linked: $@"
-
-%.bin: %.elf
+%.bin: $(APP).elf
 	$(OBJCOPY) -O binary $< $@
 	@echo "Binary: $@"
 
 clean:
-	rm -f $(OBJS) $(ELFS) $(BINS) tBasic.bin tBasic.elf
+	rm -f $(OBJS).o $(ELFS) $(BINS).bin $(APP).elf
 	@echo "Clean complete"

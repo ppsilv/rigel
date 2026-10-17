@@ -49,3 +49,7 @@ uint8_t sys_getkey(){
 	ch = ring_buf_get(); 
 	return ch;
 }
+
+uint8_t sys_haskey(){
+	return ring_buf_is_empty();
+}

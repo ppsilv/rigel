@@ -56,5 +56,6 @@ int main( int argc, char ** argv )
     //setup();
     rigel_settextcolor(2,0);
     loop();
-    printf("Exiting tBasic...\n");
+    printf("Exiting tBasic 1...\n");
+    return 0;
 }

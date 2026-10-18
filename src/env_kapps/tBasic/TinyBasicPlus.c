@@ -80,7 +80,7 @@ typedef short unsigned LINENUM;
 //IMPLEMENTACAO WHILE
 #define STACK_WHILE_FLAG 0x57  // 'W'
 
-unsigned char exit = 0;
+unsigned char tb_exit = 0;
 
 struct stack_while_frame {
     unsigned char frame_type;
@@ -559,7 +559,7 @@ static void getln(char prompt)
     switch(c)
     {
       case PS2_ESC:
-        exit=1;
+        tb_exit=1;
         return;
       case NL:
         //break;
@@ -1068,7 +1068,7 @@ prompt:
   }
 
   getln( '>' );
-  if( exit){
+  if( tb_exit){
     return;
   }
   toUppercaseBuffer();
@@ -2713,35 +2713,21 @@ static void line_terminator(void)
 
 
 /***********************************************************/
-/*
 static unsigned char breakcheck(void)
 {
+    unsigned char ch = 0;
 
-#ifdef __CONIO__
-  if(kbhit())
-    return getch() == CTRLC;
-  else
-    return getchar();
-#endif
-    return 0;
-
-}
-*/
-static unsigned char breakcheck(void)
-{
-  int got;
-    if( ! rigel_haskey()){
-      return 0;
+    if (!rigel_haskey()) {
+        return 0;
     }
+
     rigel_ioctl(0, TIOC_SETMODE, (void *)(long)(TTY_RAW | TTY_NOECHO));
-    if (read(0, &got, 1) != 1)
-    rigel_ioctl(0, TIOC_SETMODE, (void *)0);   /* restaura modo normal */
-    if ( got < 255) {
-        if ( got == CTRLC) {
-            return 1;
-        }
+    if (read(0, &ch, 1) != 1) {
+        ch = 0;
     }
-    return 0;
+    rigel_ioctl(0, TIOC_SETMODE, (void *)0);   /* restaura modo normal */
+
+    return (ch == CTRLC) ? 1 : 0;
 }
 /***********************************************************/
 static int inchar()
@@ -2752,6 +2738,7 @@ static int inchar()
     got = getchar();
     //printf("%08x\n",got);
   }
+  
   // translation for desktop systems
   if( got == LF ) got = CR;
 

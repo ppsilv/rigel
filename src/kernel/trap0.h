@@ -40,6 +40,7 @@ extern int sys_spawn(const char *path, char **argv);   /* spawn.c */
 extern int OS_TaskAlive(int id);                       /* scheduler.c */
 extern void OS_SleepTicks(uint32_t ticks);
 extern uint8_t sys_getkey();
+extern uint8_t sys_haskey();
 
 extern uint32_t day_uptime;
 extern void sys_setramvector(long stub_addr, long handler_addr);

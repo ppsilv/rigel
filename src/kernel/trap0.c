@@ -126,7 +126,7 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_FFINDFIRST: return sys_findfirst((const char *)a1, (const char *)a2, (rigel_dirent_t *)a3);
     case SYS_FFINDNEXT:  return sys_findnext(a1, (rigel_dirent_t *)a2);
     case SYS_GETKBDKEY:  return sys_getkey();
-    case SYS_HASKEY:     return -1; //sys_haskey();
+    case SYS_HASKEY:     return sys_haskey();
     case SYS_GETUPTIME: return day_uptime;
     case SYS_SLEEP:     return sys_sleep(a1);      /* a1 = milissegundos */
     case SYS_YIELD:     return sys_yield();

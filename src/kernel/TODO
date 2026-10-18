@@ -42,3 +42,29 @@ Se quiser que eu faça o passo 1, mande: scheduler.c, scheduler.h, o arquivo ond
 •   ln: Cria links (atalhos) rígidos ou simbólicos.
 •   kill: Envia sinais para encerrar processos.
 •   ps: lista processos rodando
+Sobre os próximos comandos, o que cada um exige é bem diferente:
+
+•   head e tail: só apps. Nada novo no kernel. O tail lê o arquivo 
+    guardando as últimas N linhas num buffer circular, ou usa lseek 
+    se o VFS suportar.
+•   mv: o FatFS já tem f_rename. Falta confirmar se existe um syscall 
+    de rename (algo como rigel_rename) e se o FF_FS_MINIMIZE permite. 
+    Se faltar, é um syscall pequeno.
+•   ps: precisa de um syscall que copie para o app a lista de tasks 
+    (id, nome, estado, uso de stack). É simples, porque a lista circular 
+    de TCBs já existe.
+•   kill: é o mais delicado. Matar uma task à força exige liberar o slot, 
+    fechar os descritores abertos (incluindo sockets), liberar os blocos de 
+    kmalloc dela e tirar a task da lista de prontos ou dormindo. Se ela 
+    estiver no meio de um semáforo do lwIP ou do FatFS, pode deixar o lock 
+    preso. Eu começaria permitindo matar só apps de usuário, e nunca as 
+    tasks de kernel.
+•   ln: primeiro precisa de uma decisão de projeto, porque o FAT não tem 
+    links. Pelo que fizemos, o bit L (0x80) marca um arquivo como link. 
+    O link simbólico viraria um arquivo pequeno com o caminho de destino, 
+    resolvido no open do VFS. Link rígido não é possível no FAT, então eu 
+    faria só o simbólico.
+
+Minha sugestão de ordem: head/tail, mv, ps, kill e por último ln. 
+Começo por head e tail, junto com o mv, se você me mandar o ksyscall.h 
+atual ou me disser se já existe o rename.

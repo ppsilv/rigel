@@ -184,7 +184,7 @@ int kernel_main(){
     //kmalloc_init((void*)0x92000, 0x8000); ERRO FEIO PORQUE TEM VALOR CHUMBADO ESTÁTICAMENTE
     kmalloc_init(__heap_start, (uint32_t)(__heap_end - __heap_start));
 
-    kernel_puts("Rigel 0.10 kernel 0.102\n");
+    kernel_puts("Rigel 0.10 kernel 0.103 Redir...\n");
     do_ideinit(0,NULL);
 
    kernel_puts("Ring buffer init\n");

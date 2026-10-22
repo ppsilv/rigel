@@ -119,6 +119,10 @@ static sys_mutex_t  hw_lock;
 static int          started;
 static const uint8_t cfg_mac[6] = NET_MAC;
 
+/* ---- monitor de rede (w5100_netmon.h) ---- */
+static volatile uint32_t nm_rx_loops, nm_rx_frames, nm_rx_nomem, nm_tx_frames, nm_tx_errors;
+static volatile uint8_t  nm_rx_stage, nm_tx_stage;
+
 /* gerador pseudo-aleatorio (ISN do TCP, portas efemeras) */
 uint32_t rigel_rand32(void)
 {
@@ -153,7 +157,7 @@ static int hw_init(void)
 }
 
 /* ---------------------------------------------------------------- envio */
-static err_t low_level_output(struct netif *netif, struct pbuf *p)
+static err_t low_level_output_i(struct netif *netif, struct pbuf *p)
 {
     struct pbuf *q;
     uint16_t len = p->tot_len, ptr;
@@ -168,6 +172,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 #endif
     sys_mutex_lock(&hw_lock);
     DBG("  TX lock ok\n");
+    nm_tx_stage = 2;
 
     t0 = systemTick;
     while (stable16(S0_TX_FSR) < len) {        /* espera espaco */
@@ -206,6 +211,7 @@ static struct pbuf *low_level_input(void)
 
     sys_mutex_lock(&hw_lock);
 
+    nm_rx_stage = 3;
     rsr = stable16(S0_RX_RSR);
     if (rsr < 2) goto out;
 
@@ -225,8 +231,7 @@ static struct pbuf *low_level_input(void)
         for (i = 0; i < q->len; i++)
             d[i] = HW_RD(RX_BASE + ((ptr++) & BUF_MASK));
     }
-    if (p == NULL)
-        ptr += len;                                         /* sem memoria: pula o quadro */
+    if (p == NULL) { nm_rx_nomem++; ptr += len; }          /* sem memoria: pula o quadro */
     wr16(S0_RX_RD, ptr);
     cmd0(CMD_RECV);
 out:
@@ -248,7 +253,13 @@ static void rx_thread(void *arg)
         //if (n == 6000)      rigel_stack_report(1);         /* uma unica vez, aos ~60 s: mostra todas */
         if (n >= 360000)    n = 6001;                      /* evita estouro do contador; nao repete o relatorio */
 
-        while ((p = low_level_input()) != NULL) {
+        nm_rx_loops++;
+        for (;;) {
+            nm_rx_stage = 1;
+            p = low_level_input();
+            if (p == NULL) { nm_rx_stage = 0; break; }
+            nm_rx_frames++;
+            nm_rx_stage = 2;
 #if NET_DEBUG
             {
                 const uint8_t *f = (const uint8_t *)p->payload;
@@ -272,6 +283,8 @@ static void rx_thread(void *arg)
     }
 }
 
+#include "w5100_netmon.h"
+
 /* ---------------------------------------------------------------- netif */
 static err_t w5100_netif_init(struct netif *netif)
 {
@@ -279,7 +292,7 @@ static err_t w5100_netif_init(struct netif *netif)
     netif->name[0] = 'w';
     netif->name[1] = '5';
     netif->output     = etharp_output;
-    netif->linkoutput = low_level_output;
+    netif->linkoutput = nm_linkoutput;
     netif->hwaddr_len = 6;
     memcpy(netif->hwaddr, cfg_mac, 6);
     netif->mtu   = 1500;
@@ -336,6 +349,7 @@ int rigel_net_start(void)
     kernel_puts("    :w5100rx thread creating\n");
     if (sys_thread_new("w5100rx", rx_thread, &w5100_if, 8192, 1) < 0)
         return -1;
+    nm_start();
     started = 1;
     return 0;
 }

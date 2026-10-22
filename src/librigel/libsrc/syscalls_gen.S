@@ -93,4 +93,5 @@
         SYSCALL rigel_setsockopt             0x0043   /* SYS_SETSOCKOPT */
         SYSCALL rigel_haskey                 0x1051   /* SYS_HASKEY */
         SYSCALL rigel_getkbdkey              0x0050   /* SYS_GETKBDKEY */
+        SYSCALL rigel_getkey                 0x1052   /* SYS_GETKEY */
         SYSCALL rigel_getuptime              0x1050   /* SYS_GETUPTIME */

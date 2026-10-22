@@ -59,7 +59,7 @@ void *rigel_calloc(size_t count, size_t size);
 #define LWIP_DHCP                   0          /* 1 + NET_USE_DHCP no rigel_netcfg.h para usar DHCP */
 #define LWIP_DNS                    0
 #define LWIP_IGMP                   0
-#define LWIP_STATS                  0
+#define LWIP_STATS                  1
 
 /* ---- memoria / TCP ---- */
 #define TCP_MSS                     1460

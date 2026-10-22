@@ -223,7 +223,10 @@ int main(int argc, char *argv[])
             printf("aviso: nao consegui ligar o limite de tempo (setsockopt falhou)\n");
         handle_client((int)cs, dir, little);
         close((int)cs);
-        if (once) break;
+        if( rigel_haskey() ){
+            once = rigel_getkey();        
+        }
+        if (once == 0x1B) break;
     }
     close((int)ls);
     return 0;

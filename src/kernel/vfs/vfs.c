@@ -162,6 +162,14 @@ int vfs_write(int fd, const void *buffer, size_t size) {
 int vfs_close(int fd) {
     File *file = get_file_from_fd(fd);
     if (!file) return -1;
+
+    /* dup: se OUTRO fd ainda aponta para este mesmo File, so' solta este numero */
+    for (int i = 0; i < 256; i++) {
+        if (i != fd && fd_table[i] == file) {
+            kfree_fd(fd);
+            return 0;
+        }
+    }
     
     int result = 0;
     if (file->close) result = file->close(file);
@@ -238,4 +246,40 @@ void vfs_init(void) {
     move_fd(fd0, 0);
     move_fd(fd1, 1);
     move_fd(fd2, 2);
+}
+
+// ============================================
+// VFS_DUP - dup2: faz newfd apontar para o mesmo File de oldfd
+// Se newfd ja tinha um File e ele nao e' usado por nenhum outro fd, e' fechado aqui.
+// Devolve newfd, ou -1.
+// ============================================
+static int vfs_fd_shared(File *f) {
+    for (int i = 0; i < 256; i++) {
+        if (fd_table[i] == f)
+            return 1;
+    }
+    return 0;
+}
+
+int vfs_dup(int oldfd, int newfd) {
+    File *f, *prev;
+
+    if (oldfd < 0 || oldfd >= 256 || newfd < 0 || newfd >= 256)
+        return -1;
+    f = fd_table[oldfd];
+    if (f == NULL)
+        return -1;
+    if (oldfd == newfd)
+        return newfd;
+
+    prev = fd_table[newfd];
+    fd_table[newfd] = f;
+    if (prev == NULL) {
+        fd_count++;
+    } else if (!vfs_fd_shared(prev)) {          /* era a ultima referencia: fecha de verdade */
+        if (prev->close) prev->close(prev);
+        kfree(prev->name);
+        kfree(prev);
+    }
+    return newfd;
 }

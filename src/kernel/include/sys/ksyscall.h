@@ -92,7 +92,7 @@
 
 #define SYS_GETUPTIME          0x1050
 #define SYS_HASKEY             0x1051 
- 
+#define SYS_GETKEY             0x1052  
 
 
 

@@ -4,11 +4,88 @@
 #include <malloc.h>
 #include <ctype.h>
 #include <string.h>
+#include <unistd.h>
 #include "shell.h"
 #include <rigel/rigel.h>
 #include <sys/vfs.h>
 
 extern const cmd_entry_t g_cmd_table[];
+
+static char *manual="Estou validando o shell com redirecionamento antes de entregar:o patch do kernel\n"
+"já passou nos testes (aplicado duas vezes, sem erro). Agora testo o parser e a\n"
+"compilação do `shell.c`.\n"
+"\n"
+"## Atualizações\n"
+"Trouxe do shell v0 o redirecionamento (`>`, `>>`, `<`), o script `/boot.bat`, os\n"
+"comentários com `#` e os comandos `echo`, `clear`, `meminfo` e `exit`. Testei o\n"
+"parser e a lógica do dup no PC (o parser com 14 linhas de exemplo). Não rodei no\n"
+"Rigel.\n"
+"\n"
+"## Passos para a aplicação\n"
+"Duas partes precisam entrar no kernel e no shell, nesta ordem:\n"
+"\n"
+"**Passo 1. Kernel (o `SYS_DUP` ainda é só um `return -1`).**\n"
+"O shellv1 é um app, então não consegue trocar o stdout como o v0 fazia.\n"
+"Para isso o redirecionamento usa o `rigel_dup` (equivalente ao `dup2`).\n"
+"Na pasta com o `vfs.c` e o `trap0.c` do kernel, rode:\n"
+"\n"
+"**Primeira Aplicação**\n"
+"\n"
+"python3 patch_dup.py vfs.c trap0.c\n"
+"\n"
+"\n"
+"O patch faz quatro coisas:\n"
+"- Faz `vfs_close` soltar só o número do fd quando outro fd ainda aponta para o\n"
+"    mesmo arquivo.\n"
+"- Acrescenta `vfs_dup`.\n"
+"- Troca `case SYS_DUP: return -1;` por `return vfs_dup(a1, a2);`.\n"
+"- Declara `vfs_dup` no `trap0.c`.\n"
+"\n"
+"É idempotente, tudo-ou-nada, e guarda `.bak_dup` de cada arquivo. Se algum trech\no"
+"não for encontrado, ele não altera nada e diz qual faltou.\n"
+"\n"
+"**Passo 2. Shell.**\n"
+"Substitua o `shell.c` da pasta do shell pelo novo. O seu atual era igual ao que\n"
+"eu tinha, então é substituição completa. O banner passa a dizer\n"
+"`SHELL V2`. Recompile o kernel e o shell.\n"
+"\n"
+"**Como fica:**\n"
+"\n"
+"- `echo oi > a.txt` grava\n"
+"- `echo mais >> a.txt` acrescenta,\n"
+"- `tbasic < prog.bas`\n"
+"    lê o stdin de um arquivo.\n"
+"    Valem para comandos internos e para programas `.elf`, e dá para combinar\n"
+"    (`cmd < in > out`).\n"
+"- Aspas simples e duplas agrupam palavras: `echo a  b`. Um `>` dentro de aspas\n"
+"    é texto.\n"
+"- `/boot.bat` roda ao iniciar, um comando por linha, com `[boot]` antes de cada\n"
+"    uma. Se o arquivo não existir, nada acontece.\n"
+"- Mensagens de erro como \"Unknown command\" vão para o stderr, então aparecem na\n"
+"    tela mesmo quando o stdout está redirecionado.\n"
+"\n"
+"**Limitações e cuidados:**\n"
+"- A tabela de fds é global, então enquanto um comando redirecionado roda, tudo o\n"
+"    que for impresso em stdout por qualquer app vai para o arquivo.\n"
+"- `2>`, `2>&1`, pipes (`|`) e heredoc (`<<`) não existem.\n"
+"    O `<<` avisa que não foi implementado.\n"
+"- O comando `exit` encerra o shell, e a máquina fica sem prompt até o reset.\n"
+"    Se não quiser essa opção, apague a linha `{\"exit\", ...}`\n"
+"    da tabela de comandos.\n"
+"- Os `reboot` e `shutdown` do v0 eram só mensagens e não os trouxe.\n"
+"- O `>` abre com os mesmos flags que o shell v0 usava (`WRONLY|TRUNC`). Se um\n"
+"    arquivo novo não for criado, me avise e ajusto os flags para a\n"
+"    sua `fat_open`.\n"
+"\n"
+"Para testar:\n"
+"1.  `echo ola > t.txt`\n"
+"2.  `cat t.txt`\n"
+"3.  `echo mais >> t.txt`\n"
+"4.  `cat t.txt`\n"
+"5.  `ls > lista.txt`.\n";
+
+
+
 
 void do_help(int argc, char *argv[])
 {
@@ -176,4 +253,12 @@ void do_ls(int argc, char *argv[]){
     rigel_closedir(d);
 
     printf("%d arquivo(s), %lu bytes, %d diretorio(s)\n", files, total, dirs);    
+}
+void do_time(int argc, char *argv[]){
+
+}
+void do_shst(int argc, char *argv[]){
+}
+void do_manual(int argc, char *argv[]){
+    printf("\n%s\n",manual);
 }

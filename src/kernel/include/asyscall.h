@@ -1,16 +1,19 @@
 #ifndef __APP_SYSCALL_H__
 #define __APP_SYSCALL_H__
-
+#include <unistd.h>
 #include <rigel_types.h>
 
 
 //VFS
-extern int open(const char *path, int flags);
-extern int read(int fd, void *buf, int count);
-extern int write(int fd, const void *buf, int count);
+extern int open(const char *path, int flags,...);
+//extern int read(int fd, void *buf, int count);
+_READ_WRITE_RETURN_TYPE read (int __fd, void *__buf, size_t __nbyte);
+//extern int write(int fd, const void *buf, int count);
+_READ_WRITE_RETURN_TYPE write (int __fd, const void *__buf, size_t __nbyte);
 extern int close(int fd);
 extern int ioctl(int fd, int cmd, void *arg);
-extern int lseek(int fd, uint32_t offset, int whence);
+//extern int lseek(int fd, uint32_t offset, int whence);
+off_t   lseek (int __fildes, off_t __offset, int __whence);
 
 //Video text functions
 extern int video_writechar(int fd, char ch);

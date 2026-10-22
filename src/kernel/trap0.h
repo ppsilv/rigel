@@ -39,6 +39,7 @@ extern void sys_fs_task_exit(int owner);
 extern int sys_spawn(const char *path, char **argv);   /* spawn.c */
 extern int OS_TaskAlive(int id);                       /* scheduler.c */
 extern void OS_SleepTicks(uint32_t ticks);
+extern uint8_t sys_getkbdkey();
 extern uint8_t sys_getkey();
 extern uint8_t sys_haskey();
 

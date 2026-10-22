@@ -43,9 +43,3 @@ uint8_t ring_buf_is_full(void)
 	return next_head == rb->tail;
 }
 
-uint8_t sys_getkey(){
-	uint16_t ch=0;
-	while( ring_buf_is_empty() );
-	ch = ring_buf_get(); 
-	return ch;
-}

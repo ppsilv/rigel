@@ -117,9 +117,10 @@ TABLE = [
   ("ACCEPT",     "net", "accept",     "long fd, void *addr, long *len"),
   ("SETSOCKOPT", "net", "setsockopt", "long fd, long level, long opt, const void *val, long len"),
 
-  ("HASKEY", "kbd", "haskey",  "void"),
+  ("HASKEY",    "kbd", "haskey",     "void"),
   ("GETKBDKEY", "kbd", "getkbdkey",  "void"),
-  ("GETUPTIME", "proc", "getuptime",  "void"),  
+  ("GETKEY",    "kbd", "getkey",     "void"),
+  ("GETUPTIME", "proc", "getuptime", "void"),  
   
 ]
 

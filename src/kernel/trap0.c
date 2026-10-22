@@ -37,6 +37,7 @@ extern void kernel_puts(const char *s);
 extern void kernel_puthex(uint32_t v);
 #endif
 
+extern int vfs_dup(int oldfd, int newfd);          /* vfs.c */
 int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6, long a7)
 {
     (void)a4; (void)a5; (void)a6; (void)a7;
@@ -125,7 +126,8 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_FUNMOUNT:   return sys_funmount((const char *)a1);
     case SYS_FFINDFIRST: return sys_findfirst((const char *)a1, (const char *)a2, (rigel_dirent_t *)a3);
     case SYS_FFINDNEXT:  return sys_findnext(a1, (rigel_dirent_t *)a2);
-    case SYS_GETKBDKEY:  return sys_getkey();
+    case SYS_GETKBDKEY:  return sys_getkbdkey();
+    case SYS_GETKEY:     return sys_getkey();
     case SYS_HASKEY:     return sys_haskey();
     case SYS_GETUPTIME: return day_uptime;
     case SYS_SLEEP:     return sys_sleep(a1);      /* a1 = milissegundos */
@@ -169,7 +171,7 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
 
     /* ---- TODO: ainda sem implementacao ---- */
     case SYS_VGAPUTCHAR: return -1;
-    case SYS_DUP: return -1;   /* TODO */
+    case SYS_DUP: return vfs_dup((int)a1, (int)a2);
     case SYS_READTIME: return -1;   /* TODO */
     case SYS_WRITETIME: return -1;   /* TODO */
     case SYS_EEPROMREADBYTE: return -1;   /* TODO */

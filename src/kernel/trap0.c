@@ -104,9 +104,11 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
         kernel_puts("\n[kernel] WAITPID terminou\n");
 #endif
         return 0;
-    case SYS_FOPENDIR: return sys_opendir((const char *)a1);
-    case SYS_FREADDIR: return sys_readdir((long)a1, (rigel_dirent_t *)a2);
-    case SYS_FCLOSEDIR: return sys_closedir((long)a1);
+    case SYS_FOPENDIR:   return sys_opendir((const char *)a1);
+    case SYS_FREADDIR:   return sys_readdir((long)a1, (rigel_dirent_t *)a2);
+    case SYS_FCLOSEDIR:  return sys_closedir((long)a1);
+    case SYS_CHDIR:      return sys_chdir((const char *)a1);
+    case SYS_GETCWD:     return sys_getcwd((char *)a1, (long)a2);
     /* ---- arquivos FAT (familia SYS_F*, sys_fsfile.c / sys_fsdir.c) ---- */
     case SYS_FOPEN:      return sys_fopen((const char *)a1, a2);
     case SYS_FCLOSE:     return sys_fclose(a1);
@@ -126,16 +128,23 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_FUNMOUNT:   return sys_funmount((const char *)a1);
     case SYS_FFINDFIRST: return sys_findfirst((const char *)a1, (const char *)a2, (rigel_dirent_t *)a3);
     case SYS_FFINDNEXT:  return sys_findnext(a1, (rigel_dirent_t *)a2);
+    case SYS_CHMOD:     return sys_chmod((const char *)a1, a2);
+    //Keyboard
     case SYS_GETKBDKEY:  return sys_getkbdkey();
     case SYS_GETKEY:     return sys_getkey();
     case SYS_HASKEY:     return sys_haskey();
+    //Time
     case SYS_GETUPTIME: return day_uptime;
+    case SYS_READRTC:   return sys_readrtc();
+    case SYS_WRITERTC:  return sys_writertc(a1);
+    //Tasks
     case SYS_SLEEP:     return sys_sleep(a1);      /* a1 = milissegundos */
     case SYS_YIELD:     return sys_yield();
-    case SYS_CHMOD:     return sys_chmod((const char *)a1, a2);
-    case SYS_SETRAMVECTOR:
-        sys_setramvector((long)a1, (long)a2);
-        return 0;
+    case SYS_DUP:       return vfs_dup((int)a1, (int)a2);
+
+    case SYS_SETRAMVECTOR:  sys_setramvector((long)a1, (long)a2);
+                        return 0;
+    //Screen                        
     case SYS_GOTOXY:    sys_gotoxy((long)a1, (long)a2);
                         return 0;
     case SYS_CLRSCR:    sys_clrscr();
@@ -144,17 +153,14 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
                         return 0; 
     case SYS_GOHOME:    sys_gohome(); 
                         return 0;
-    case SYS_CHDIR:  return sys_chdir((const char *)a1);
-    case SYS_GETCWD: return sys_getcwd((char *)a1, (long)a2);
-
+    //Ethernet
     case SYS_SOCKET:     return sys_socket(a1, a2, a3);
     case SYS_BIND:       return sys_bind(a1, (const void *)a2, a3);
     case SYS_LISTEN:     return sys_listen(a1, a2);
     case SYS_ACCEPT:     return sys_accept(a1, (void *)a2, (long *)a3);
     case SYS_CONNECT:    return sys_connect(a1, (const void *)a2, a3);
     case SYS_SETSOCKOPT: return sys_setsockopt(a1, a2, a3, (const void *)a4, a5);
-
-
+    //Graphical
     case SYS_DRAWVLINE:          return -1;
     case SYS_DRAWHLINE:          return -1;
     case SYS_DRAWLINE:           return -1;
@@ -165,13 +171,8 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_DRAWROUNDRECT:      return -1;
     case SYS_FILLROUNDRECT:      return -1;
     case SYS_FILLRECT:           return -1;
-
-
-
-
     /* ---- TODO: ainda sem implementacao ---- */
     case SYS_VGAPUTCHAR: return -1;
-    case SYS_DUP: return vfs_dup((int)a1, (int)a2);
     case SYS_READTIME: return -1;   /* TODO */
     case SYS_WRITETIME: return -1;   /* TODO */
     case SYS_EEPROMREADBYTE: return -1;   /* TODO */
@@ -193,8 +194,6 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_PPICCFG: return -1;   /* TODO */
     case SYS_PPIPORTCREAD: return -1;   /* TODO */
     case SYS_PPIPORTCWRITE: return -1;   /* TODO */
-    case SYS_READRTC:  return sys_readrtc();
-    case SYS_WRITERTC: return sys_writertc(a1);
     case SYS_SINC: return -1;   /* TODO */
 
     default:

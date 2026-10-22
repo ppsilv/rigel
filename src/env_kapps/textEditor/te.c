@@ -61,6 +61,30 @@ static void ler_nome_arquivo(char *destino, size_t tamanho_max);
 // ---- Modelo: buffer = texto sequencial; 'janela' = offset (bytes) da 1a linha de TELA visivel ----
 #define LINHAS_TELA (height-2)
 
+void esconder_cursor(void) {
+    printf("\033[?25l");
+    fflush(stdout);
+}
+
+void mostrar_cursor(void) {
+    printf("\033[?25h");
+    fflush(stdout);
+}
+// Função para mover o cursor do terminal
+static void mover_cursor(int x, int y) {
+    // Atenção: o padrão ANSI geralmente espera (Linha, Coluna), 
+    // ou seja, (y + 1, x + 1) se você usa coordenadas a partir de 0.
+    printf("\033[%d;%dH", y + 1, x + 1);
+    fflush(stdout); // Garante que o comando seja enviado imediatamente para a tela
+}
+static void clrscr(){
+    printf("\033[2J\033[H");
+    fflush(stdout);    
+}
+
+
+
+
 // Monta uma linha de tela (80 colunas) a partir de 'off'. Trata \n, \r, TAB e quebra em 80 colunas.
 // Retorna o offset do inicio da proxima linha de tela.
 // tx >= 0: em *toff devolve o offset do byte que ocupa a coluna tx (-1 se a linha nao chega la).
@@ -187,22 +211,6 @@ void printcursores(){
     printf ("col: %02d line: %02d ",cursor_x,line);
     mover_cursor(cursor_x,cursor_y);    
 }
-void esconder_cursor(void) {
-    printf("\033[?25l");
-    fflush(stdout);
-}
-
-void mostrar_cursor(void) {
-    printf("\033[?25h");
-    fflush(stdout);
-}
-// Função para mover o cursor do terminal
-static void mover_cursor(int x, int y) {
-    // Atenção: o padrão ANSI geralmente espera (Linha, Coluna), 
-    // ou seja, (y + 1, x + 1) se você usa coordenadas a partir de 0.
-    printf("\033[%d;%dH", y + 1, x + 1);
-    fflush(stdout); // Garante que o comando seja enviado imediatamente para a tela
-}
 // Posiciona o cursor do terminal (travando para nao brigar com a thread de desenho)
 static void atualiza_cursor(void){
     //mtx_lock(&//mutex_tela);
@@ -319,10 +327,6 @@ static void cursor_end(){
     atualiza_cursor();
 }
 
-static void clrscr(){
-    printf("\033[2J\033[H");
-    fflush(stdout);    
-}
 // Desenha a janela atual: 28 linhas de tela a partir do offset 'janela'
 static void desenhar(void){
     char linha[80];

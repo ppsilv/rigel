@@ -6,7 +6,9 @@
 extern "C" {
 #endif
 
+long rigel_openpty(int fds[2]);
 long rigel_spawn(char *path, char **argv);
+long rigel_spawn_io(const char *p, char **a, int i, int o, int e);
 long rigel_waitpid(long pid);
 long rigel_sleep(long ticks);
 long rigel_yield(void);

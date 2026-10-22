@@ -12,12 +12,15 @@
  *   TTY_NOECHO   nao ecoa o que e' digitado (vale nos dois modos).
  *   TTY_NONBLOCK so' com TTY_RAW: se nao ha tecla, read devolve 0 na hora.
  *
- * O read bloqueante espera em laco ocupado ate' o teclado mandar algo.
+ * O read bloqueante espera dormindo (OS_SleepTicks(1)) ate' o teclado mandar algo.
+ * A logica de linha/eco/modos esta em linedisc.c (compartilhada com o pty).
  */
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/vfs.h>
+#include <sys/scheduler.h>   /* OS_SleepTicks */
+#include <sys/linedisc.h>
 
 extern void    kernel_puts(const char *s);
 
@@ -52,55 +55,33 @@ int vgacon_write(File *file, const void *buffer, size_t size)
     return (int)size;
 }
 
+/* origem dos bytes e destino do eco para o linedisc.c */
+static int vcon_getch(void *ctx, int block)
+{
+    (void)ctx;
+    while (ring_buf_is_empty()) {
+        if (!block)
+            return LD_NONE;
+        OS_SleepTicks(1);                       /* dorme 1 tick (10 ms) em vez de girar */
+    }
+    return ring_buf_get();
+}
+
+static void vcon_putch(void *ctx, uint8_t c)
+{
+    (void)ctx;
+    vga_put(c);
+}
+
 int vgacon_read(File *file, void *buffer, size_t size)
 {
-    uint8_t *buf = (uint8_t *)buffer;
-    size_t   n = 0;
-    uint32_t mode = (uint32_t)(uintptr_t)file->private_data;
-    int raw      = (mode & TTY_RAW) != 0;
-    int echo     = (mode & TTY_NOECHO) == 0;
-    int nonblock = raw && (mode & TTY_NONBLOCK) != 0;
+    ld_io_t io;
 
-    while (n < size) {
-        if (ring_buf_is_empty()) {
-            if (raw && (n > 0 || nonblock))
-                break;                          /* modo cru: devolve o que ha' */
-            while (ring_buf_is_empty())
-                ;                               /* espera uma tecla */
-        }
-
-        uint8_t c = ring_buf_get();
-
-        if (raw) {
-            buf[n++] = c;
-            if (echo && c != '\r')
-                vga_put(c);
-            continue;
-        }
-
-        if (c == '\r' || c == '\n') {           /* Enter: fecha a linha */
-            if (echo)
-                vga_put('\n');
-            buf[n++] = '\n';
-            break;
-        }
-        if (c == 0x08 || c == 0x7F) {           /* backspace / delete */
-            if (n > 0) {
-                n--;
-#if VCON_BACKSPACE_OK
-                if (echo) { vga_put(0x08); vga_put(' '); vga_put(0x08); }
-#endif
-            }
-            continue;
-        }
-        if (c < 0x20)                           /* demais controles: ignora */
-            continue;
-
-        buf[n++] = c;
-        if (echo)
-            vga_put(c);
-    }
-    return (int)n;
+    io.getch   = vcon_getch;
+    io.putch   = vcon_putch;
+    io.ctx     = NULL;
+    io.bs_echo = VCON_BACKSPACE_OK;
+    return linedisc_read(&io, (uint32_t)(uintptr_t)file->private_data, buffer, size);
 }
 
 int vgacon_close(File *file)

@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-#define OS_MAX_TASKS   8
+#define OS_MAX_TASKS   12   /* era 8: uma sessao telnet usa 2 tasks (telnetd + shell) */
+#define OS_MAX_FDS     32   /* descritores por task (a tabela fica dentro do tcb) */
 #define OS_SLOT_ID_BASE  1000
 
 typedef enum {
@@ -20,6 +21,8 @@ typedef enum {
  * fazendo move.l (a0), a7 -- ou seja, ele assume offset 0.
  * Se voce reordenar os campos, o assembly quebra silenciosamente.
  */
+struct File;
+
 typedef struct tcb {
     uint32_t     *sp;          /* stack pointer salvo desta tarefa */
     task_state_t  state;
@@ -30,6 +33,7 @@ typedef struct tcb {
     int           id;
     uint32_t      wake_tick;   /* se 'sleeping': acorda quando systemTick chegar aqui */
     uint8_t       sleeping;    /* 1 = bloqueada por OS_SleepTicks (o tick a acorda sozinho) */
+    struct File  *fds[OS_MAX_FDS]; /* descritores da task (vfs.c); 0..2 herdados do pai. Fica DEPOIS de 'sp' (offset 0) */
 } tcb_t;
 
 /* current_task precisa ser global e visivel pro assembly (ctx_switch_*.s usa .extern current_task) */

@@ -37,7 +37,9 @@ TABLE = [
   ("GETPID", None, "getpid", None), ("FUNLINK", None, "unlink", None),
   ("FRENAME", None, "rename", None), ("FMKDIR", None, "mkdir", None),
   # ---- processo ----
+  ("OPENPTY",  "proc", "openpty",  "int fds[2]"),
   ("SPAWN",  "proc", "spawn",  "char *path, char **argv"),
+  ("SPAWN_IO",  "proc", "spawn_io",  "const char *p, char **a, int i, int o, int e"),
   ("WAITPID","proc", "waitpid","long pid"),
   ("SLEEP",  "proc", "sleep",  "long ticks"),
   ("YIELD",  "proc", "yield",  "void"),

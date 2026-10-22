@@ -12,6 +12,8 @@
 #include <sys/ksyscall.h>
 #include <sys/scheduler.h>   /* OS_TaskExit(), current_task */
 #include "trap0.h"
+#include <sys/syscall_pty.h>   /* SYS_OPENPTY, SYS_SPAWN_IO (novos) */
+#include <sys/sys_pty.h>
 
 /*
  * Depuracao do SYS_WRITE: imprime na tela do KERNEL (VGA, via kernel_puts)
@@ -38,9 +40,10 @@ extern void kernel_puthex(uint32_t v);
 #endif
 
 extern int vfs_dup(int oldfd, int newfd);          /* vfs.c */
+extern int sys_spawn_io(const char *path, char **argv, int fd_in, int fd_out, int fd_err);   /* spawn.c */
 int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6, long a7)
 {
-    (void)a4; (void)a5; (void)a6; (void)a7;
+    (void)a6; (void)a7;
 
     switch (num) {
 
@@ -55,8 +58,9 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
             sys_fs_task_exit((int)current_task->id);
             sys_dir_task_exit((int)current_task->id);
         }
-        sys_net_task_exit((int)current_task->id);
-        OS_TaskExit();            /* nao volta */
+        if (current_task)
+            sys_net_task_exit((int)current_task->id);
+        OS_TaskExit();            /* fecha os fds da task (vfs_task_exit) e nao volta */
         return 0;
     case SYS_GETPID:
         return current_task ? (int)current_task->id : -1;
@@ -79,11 +83,7 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
 #ifdef TRAP_DIAG
         kernel_puts("\n[kernel] SYS_CLOSE fd="); kernel_puthex((uint32_t)a1); kernel_puts("\n");
 #endif
-        /* A tabela de fds e' GLOBAL (compartilhada por todas as tasks): quando um
-         * app termina, a newlib pode fechar 0/1/2 e derrubaria o stdio do shell.
-         * Ate' existir tabela por task, fd 0,1,2 nunca sao fechados. */
-        if ((int)a1 >= 0 && (int)a1 <= 2)
-            return 0;
+        /* tabela de fds por task: fechar 0/1/2 so' solta a referencia desta task */
         return vfs_close((int)a1);
     case SYS_IOCTL:
         return vfs_ioctl((int)a1, (int)a2, (void *)a3);
@@ -91,6 +91,10 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
         return vfs_lseek((int)a1, (uint32_t)a2, (int)a3);
     case SYS_SPAWN:
         return sys_spawn((const char *)a1, (char **)a2);
+    case SYS_SPAWN_IO:      /* path, argv, fd_in, fd_out, fd_err */
+        return sys_spawn_io((const char *)a1, (char **)a2, (int)a3, (int)a4, (int)a5);
+    case SYS_OPENPTY:       /* a1 = int fds[2]: [0]=master (telnetd), [1]=slave (shell) */
+        return pty_open_fds((int *)a1);
     case SYS_WAITPID:
 #ifdef TRAP_DIAG
         kernel_puts("\n[kernel] WAITPID pid="); kernel_puthex((uint32_t)a1); kernel_puts("\n");
@@ -104,9 +108,9 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
         kernel_puts("\n[kernel] WAITPID terminou\n");
 #endif
         return 0;
-    case SYS_FOPENDIR:   return sys_opendir((const char *)a1);
-    case SYS_FREADDIR:   return sys_readdir((long)a1, (rigel_dirent_t *)a2);
-    case SYS_FCLOSEDIR:  return sys_closedir((long)a1);
+    case SYS_FOPENDIR: return sys_opendir((const char *)a1);
+    case SYS_FREADDIR: return sys_readdir((long)a1, (rigel_dirent_t *)a2);
+    case SYS_FCLOSEDIR: return sys_closedir((long)a1);
     case SYS_CHDIR:      return sys_chdir((const char *)a1);
     case SYS_GETCWD:     return sys_getcwd((char *)a1, (long)a2);
     /* ---- arquivos FAT (familia SYS_F*, sys_fsfile.c / sys_fsdir.c) ---- */

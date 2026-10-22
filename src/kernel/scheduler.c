@@ -14,6 +14,10 @@ static tcb_t task_pool[OS_MAX_TASKS];   /* armazenamento fixo dos TCBs -- sem ma
 extern void kernel_puts(const char *s) ;
 extern uint32_t systemTick;             /* +1 a cada 10 ms (OS_TickISR) */
 
+/* vfs.c: tabela de descritores por task (stdio herdado do pai; tudo fechado quando a task acaba) */
+extern void vfs_task_init(tcb_t *t);
+extern void vfs_task_exit(tcb_t *t);
+
 /*
  * ready_head: cabeca da fila circular de tarefas PRONTAS (TASK_READY
  * ou TASK_RUNNING). So essas tarefas estao encadeadas via 'next'.
@@ -165,6 +169,8 @@ tcb_t *OS_TaskCreate(void (*entry)(void), void *arg, uint8_t *stack, uint32_t st
     tcb->next       = NULL;
     tcb->sleeping   = 0;
     tcb->wake_tick  = 0;
+    //foi tirado daqui e enviado para spawn/scheduler_addition.c
+    //vfs_task_init(tcb);                 /* herda stdin/stdout/stderr da task que esta criando esta */
 
     uint8_t *sp = stack + stack_size;
     sp = (uint8_t *)((uintptr_t)sp & ~(uintptr_t)1);   /* pilha alinhada em word, exigencia do 68k */
@@ -194,6 +200,11 @@ tcb_t *OS_TaskCreate(void (*entry)(void), void *arg, uint8_t *stack, uint32_t st
  */
 void OS_TaskExit(void)
 {
+    /* fecha os descritores ANTES de sair da fila (o close pode bloquear: nao pode ser com IRQ mascarada).
+     * Sem isso os File vazam e a outra ponta de um pty/socket nunca ve o fim. */
+    if (current_task)
+        vfs_task_exit(current_task);
+
     uint16_t sr = irq_save();
     if (current_task) {
         ready_remove(current_task);       /* sai do round robin de vez */

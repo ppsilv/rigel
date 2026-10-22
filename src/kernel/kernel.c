@@ -202,7 +202,7 @@ int kernel_main(){
     kernel_puts("Posix system init\n");
     vfs_init();
 
-    LOCK(saved_sr);
+    saved_sr=cs_enter();
     sys_setramvector(0x000800b4,(uint32_t)trap0_entry);
     sys_setramvector(0x00080090,(uint32_t)OS_TickISR);
     sys_setramvector(0x00080096,(uint32_t)Int3Handler);
@@ -219,7 +219,7 @@ int kernel_main(){
         volatile int j = 0; 
          (void)j;       
     }
-    UNLOCK(saved_sr);
+    cs_leave(saved_sr);
 
     kernel_puts("Initializing ethernet\n");
     if( rigel_net_start() ){

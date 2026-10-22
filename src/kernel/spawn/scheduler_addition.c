@@ -22,6 +22,7 @@ tcb_t *OS_TaskCreatePIC(void (*entry)(void), void *arg, uint8_t *stack,
     tcb->arg        = arg;
     tcb->id         = id;
     tcb->next       = NULL;
+    vfs_task_init(tcb);   //veio do scheduler.c
 
     uint8_t *sp = stack + stack_size;
     sp = (uint8_t *)((uint32_t)sp & ~1u);

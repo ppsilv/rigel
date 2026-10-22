@@ -24,6 +24,7 @@ VASMS =
 # Lista de arquivos C (CORRIGIDO: não tinha um espaço)
 SRCS =  kernel.c kmalloc.c scheduler.c trap0.c ./syscall/trap_table.c  task_create.c ./mm/slots.c kfunctions.c \
 ./sys_fsdir.c ./sys_fsfile.c ./sys_fsrtc.c  ./sys_proc.c ./sys_vectors.c ./sys_fscwd.c ./w5100_netif.c ./sys_net.c ./sys_arch.c \
+./sys_pty.c ./linedisc.c \
 ./sys_kbd.c \
 ./spawn/loader_elf.c \
 ./spawn/elf_reloc.c \
@@ -103,5 +104,5 @@ $(TARGET_BIN): $(TARGET_ELF)
 	@echo "Binary: $@"
 
 clean:
-	rm -f *.bin $(OBJS) *.map $(TARGET_LOW) $(TARGET_HIGH) $(TARGET_ELF)
+	rm -f *.bin kernel.sys $(OBJS) *.map $(TARGET_LOW) $(TARGET_HIGH) $(TARGET_ELF)
 	@echo "Clean complete"

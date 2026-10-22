@@ -94,6 +94,16 @@ void free_fd(int fd);
 void vfs_set_fd(int fd, File *file);
 File *vfs_get_fd(int fd);
 void vfs_restore_fd(int fd);
+int  vfs_dup(int oldfd, int newfd);                 /* dup2 */
+
+// ============================================
+// DESCRITORES POR TASK (ver vfs.c)
+// ============================================
+struct tcb;
+void vfs_task_init(struct tcb *t);                  /* OS_TaskCreate: herda stdin/stdout/stderr do pai */
+void vfs_task_exit(struct tcb *t);                  /* OS_TaskExit: fecha todos os descritores da task */
+int  vfs_spawn_io_begin(int fd_in, int fd_out, int fd_err);  /* so' spawn.c: stdio explicito p/ o filho */
+void vfs_spawn_io_end(void);
 
 // ============================================
 // INICIALIZAÇÃO

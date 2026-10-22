@@ -74,7 +74,7 @@ void *kmalloc(uint32_t size)
     size = KM_ALIGN(size);
     end = heap_base + heap_size;
 
-    LOCK(saved_sr);
+    saved_sr=cs_enter();
 
     p = heap_base;
     while (p < end) {
@@ -97,7 +97,7 @@ void *kmalloc(uint32_t size)
         p += HDR_SIZE + block_size;
     }
 
-    UNLOCK(saved_sr);
+    cs_leave(saved_sr);
     return result;
 }
 
@@ -110,7 +110,7 @@ void kfree(void *ptr)
     if (ptr == NULL || heap_base == NULL)
         return;
 
-    LOCK(saved_sr);
+    saved_sr=cs_enter();
 
     h = (km_header_t *) ((uint8_t *) ptr - HDR_SIZE);
     KM_SET(h, KM_SIZE(h), 1);
@@ -127,7 +127,7 @@ void kfree(void *ptr)
         }
     }
 
-    UNLOCK(saved_sr);
+    cs_leave(saved_sr);
 }
 
 void *kcalloc(uint32_t nmemb, uint32_t size)

@@ -21,7 +21,9 @@
         SYSCALL unlink                       0x000C   /* SYS_FUNLINK */
         SYSCALL rename                       0x0011   /* SYS_FRENAME */
         SYSCALL mkdir                        0x0017   /* SYS_FMKDIR */
+        SYSCALL rigel_openpty                0x0054   /* SYS_OPENPTY */
         SYSCALL rigel_spawn                  0x0001   /* SYS_SPAWN */
+        SYSCALL rigel_spawn_io               0x0055   /* SYS_SPAWN_IO */
         SYSCALL rigel_waitpid                0x004F   /* SYS_WAITPID */
         SYSCALL rigel_sleep                  0x0002   /* SYS_SLEEP */
         SYSCALL rigel_yield                  0x0003   /* SYS_YIELD */

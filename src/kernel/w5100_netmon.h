@@ -1,5 +1,5 @@
 /*
- * w5100_netmon.h -- monitor de rede do Rigel (diagnostico de "o ping parou de responder").
+ * w5100_netmon.h (v2) -- monitor de rede do Rigel (diagnostico de "o ping parou de responder").
  *
  * E' INCLUIDO por w5100_netif.c (aplique o patch_netmon.py). Cria uma task "netmon" que:
  *   - a cada NM_CHECK_S segundos (60) confere a saude da rede e, se algo estiver errado,
@@ -17,6 +17,14 @@
  * Estagios da task rx : 0 dormindo/entre voltas, 1 esperando o lock/lendo o chip, 2 dentro do lwIP
  *                       (nif->input), 3 lendo o quadro do chip.
  * Estagios do tx      : 0 livre, 1 esperando o lock do chip, 2 escrevendo no chip.
+ *
+ * v2: no alerta da task rx tambem mostra o ESTADO DA TASK (pronta/rodando/bloqueada, dormindo,
+ *     ha quantos ticks devia ter acordado) e os registradores do chip; quando a rede volta,
+ *     diz quanto tempo o problema durou. Estagios da task rx na v2:
+ *       1 esperando o lock / lendo o chip   2 dentro do lwIP (nif->input)
+ *       3 lendo RSR (tamanho recebido)      4 lendo o tamanho do quadro
+ *       5 em pbuf_alloc                     6 copiando o quadro do chip
+ *       7 avisando o chip (wr16/RECV)       0 dormindo entre voltas
  *
  * Os registradores do chip sao lidos SEM pegar o hw_lock (de proposito: se o lock estiver
  * preso, o monitor continua conseguindo diagnosticar).
@@ -74,6 +82,34 @@ static err_t nm_linkoutput(struct netif *n, struct pbuf *p)
 static volatile uint32_t nm_posts, nm_acks;
 static void nm_tcpip_cb(void *ctx) { (void)ctx; nm_acks++; }
 
+
+/* ---- diagnostico detalhado (so' no alerta) ---- */
+static void nm_print_regs(void)
+{
+    kernel_puts("      chip: sr="); nm_hex2(HW_RD(S0_SR));
+    kernel_puts(" cr="); nm_hex2(HW_RD(S0_CR));
+    kernel_puts(" ir="); nm_hex2(HW_RD(S0_IR));
+    kernel_puts(" rsr="); nm_dec(rd16(S0_RX_RSR));
+    kernel_puts(" rd="); nm_dec(rd16(S0_RX_RD));
+    kernel_puts(" txfsr="); nm_dec(rd16(S0_TX_FSR));
+    kernel_puts("\n");
+}
+
+static void nm_print_rx_task(void)
+{
+    const tcb_t *t = (const tcb_t *)nm_rx_tcb;
+    kernel_puts("      task rx: ");
+    if (t == NULL) { kernel_puts("tcb desconhecido\n"); return; }
+    kernel_puts("estado="); nm_dec((uint32_t)t->state);
+    kernel_puts("(1 pronta,2 rodando,3 bloqueada,4 morta) dormindo="); nm_dec((uint32_t)t->sleeping);
+    if (t->sleeping) {
+        int32_t d = (int32_t)(systemTick - t->wake_tick);
+        kernel_puts(" devia ter acordado ha "); nm_dec(d > 0 ? (uint32_t)d : 0); kernel_puts(" ticks");
+    }
+    kernel_puts(" estagio="); nm_dec(nm_rx_stage);
+    kernel_puts("\n");
+}
+
 static void nm_print_status(int tcpip_ok)
 {
     nm_stamp();
@@ -81,9 +117,24 @@ static void nm_print_status(int tcpip_ok)
     kernel_puts(" tx="); nm_dec(nm_tx_frames);
     kernel_puts(" semmem="); nm_dec(nm_rx_nomem);
     kernel_puts(" txerr="); nm_dec(nm_tx_errors);
+    kernel_puts(" inst="); nm_dec(nm_unstable);
+    kernel_puts(" lixo="); nm_dec(nm_rx_garbage);
     kernel_puts(" sr="); nm_hex2(HW_RD(S0_SR));
     kernel_puts(" rsr="); nm_dec(rd16(S0_RX_RSR));
     kernel_puts(tcpip_ok ? " tcpip=ok\n" : " tcpip=PARADO\n");
+
+    kernel_puts(" reinit="); nm_dec(nm_hw_reinit);
+    kernel_puts(" falhas="); nm_dec(nm_hw_reinit_fail);
+    kernel_puts(" lockpreso="); nm_dec(nm_hw_lockstuck);
+
+    extern volatile uint32_t rigel_assert_count;
+    extern char rigel_assert_msg[];
+    /* dentro da função: */
+    if (rigel_assert_count) {
+        kernel_puts(" ASSERT x"); nm_dec(rigel_assert_count);
+        kernel_puts(" "); kernel_puts(rigel_assert_msg);
+    }
+
 #if LWIP_STATS && MEM_STATS
     kernel_puts("      heap usado="); nm_dec((uint32_t)lwip_stats.mem.used);
     kernel_puts(" max="); nm_dec((uint32_t)lwip_stats.mem.max);
@@ -105,6 +156,8 @@ static void nm_thread(void *arg)
     uint32_t t_frame     = systemTick;
     uint32_t t_print     = systemTick;
     uint32_t tx_stuck    = 0;
+    uint32_t last_unst   = nm_unstable, last_garb = nm_rx_garbage;
+    uint32_t t_alert     = 0;                  /* quando o problema atual comecou */
     uint32_t mask        = 0, nm, txsum;
     uint8_t  sr;
 #if LWIP_STATS && MEM_STATS
@@ -150,12 +203,19 @@ static void nm_thread(void *arg)
         }
 #endif
 
+        /* 8/9: leituras instaveis do chip / quadros com tamanho invalido (sinal de problema no barramento) */
+        if (nm_unstable != last_unst) { last_unst = nm_unstable; nm |= 128UL; }
+        if (nm_rx_garbage != last_garb) { last_garb = nm_rx_garbage; nm |= 256UL; }
+
         if (nm & ~mask) {                                 /* apareceu um problema novo */
-            if ((nm & 1UL) && !(mask & 1UL))  { nm_stamp(); kernel_puts("ALERTA: task w5100rx PARADA, estagio="); nm_dec(nm_rx_stage); kernel_puts("\n"); }
+            if (mask == 0) t_alert = systemTick;
+            if ((nm & 1UL) && !(mask & 1UL))  { nm_stamp(); kernel_puts("ALERTA: task w5100rx PARADA, estagio="); nm_dec(nm_rx_stage); kernel_puts("\n"); nm_print_rx_task(); nm_print_regs(); }
             if ((nm & 2UL) && !(mask & 2UL))  { nm_stamp(); kernel_puts("ALERTA: task tcpip nao responde (parada ou caixa cheia)\n"); }
             if ((nm & 4UL) && !(mask & 4UL))  { nm_stamp(); kernel_puts("ALERTA: chip saiu de MACRAW, sr="); nm_hex2(sr); kernel_puts("\n"); }
             if ((nm & 8UL) && !(mask & 8UL))  { nm_stamp(); kernel_puts("ALERTA: nenhum quadro recebido ha 5 min, rsr="); nm_dec(rd16(S0_RX_RSR)); kernel_puts("\n"); }
             if ((nm & 16UL) && !(mask & 16UL)){ nm_stamp(); kernel_puts("ALERTA: envio (tx) preso, estagio="); nm_dec(nm_tx_stage); kernel_puts("\n"); }
+            if ((nm & 128UL) && !(mask & 128UL)){ nm_stamp(); kernel_puts("ALERTA: leitura instavel do chip (RSR/FSR), total="); nm_dec(nm_unstable); kernel_puts("\n"); nm_print_regs(); }
+            if ((nm & 256UL) && !(mask & 256UL)){ nm_stamp(); kernel_puts("ALERTA: quadro com tamanho invalido no chip, total="); nm_dec(nm_rx_garbage); kernel_puts("\n"); nm_print_regs(); }
 #if LWIP_STATS && MEM_STATS
             if ((nm & 32UL) && !(mask & 32UL)){ nm_stamp(); kernel_puts("ALERTA: heap do lwIP com mais de 90% de uso\n"); }
             if ((nm & 64UL) && !(mask & 64UL)){ nm_stamp(); kernel_puts("ALERTA: heap do lwIP ficou sem memoria\n"); }
@@ -163,7 +223,8 @@ static void nm_thread(void *arg)
             nm_print_status(!(nm & 2UL));
             t_print = systemTick + NM_PRINT_S * 100UL;
         } else if (nm == 0 && mask != 0) {
-            nm_stamp(); kernel_puts("rede normal novamente\n");
+            nm_stamp(); kernel_puts("rede normal novamente (problema durou ~");
+            nm_dec((systemTick - t_alert) / 100UL); kernel_puts(" s)\n");
         }
         mask = nm;
 

@@ -26,6 +26,7 @@
 #include "w5100_netif.h"
 #include "rigel_netcfg.h"
 
+
 /* ---------------------------------------------------------------- acesso ao chip */
 #ifdef NET_HOST_TEST
 extern uint8_t net_hw_rd(uint16_t reg);
@@ -96,10 +97,32 @@ static void dbg_hex16(uint16_t v)
 static inline uint16_t rd16(uint16_t r) { return (uint16_t)((HW_RD(r) << 8) | HW_RD(r + 1)); }
 static inline void     wr16(uint16_t r, uint16_t v) { HW_WR(r, v >> 8); HW_WR(r + 1, v & 0xFF); }
 
+/* ---- monitor de rede (etapa 2) ---- */
+extern struct tcb *current_task;
+static volatile uint32_t nm_unstable, nm_rx_garbage;
+static void *volatile    nm_rx_tcb;
+static struct netif w5100_if;
+static sys_mutex_t  hw_lock;
+static int          started;
+static const uint8_t cfg_mac[6] = NET_MAC;
+
+/* ---- monitor de rede (w5100_netmon.h) ---- */
+static volatile uint32_t nm_rx_loops, nm_rx_frames, nm_rx_nomem, nm_tx_frames, nm_tx_errors;
+static volatile uint8_t  nm_rx_stage, nm_tx_stage;
+static int hw_init(void);
+static err_t low_level_output_i(struct netif *netif, struct pbuf *p);
+
+
+#include "w5100_watchdog.h"
+#include "w5100_netmon.h"
+
+
 static uint16_t stable16(uint16_t r)           /* RSR/FSR: leitura dupla ate estabilizar */
 {
     uint16_t a, b;
-    do { a = rd16(r); b = rd16(r); } while (a != b);
+    int n = 0;
+    do { a = rd16(r); b = rd16(r); } while (a != b && ++n < 100);
+    if (a != b) { nm_unstable++; return 0; }     /* leitura instavel: nao prende o lock do chip */
     return a;
 }
 
@@ -114,14 +137,6 @@ static int cmd0(uint8_t c)
 }
 
 /* ---------------------------------------------------------------- estado */
-static struct netif w5100_if;
-static sys_mutex_t  hw_lock;
-static int          started;
-static const uint8_t cfg_mac[6] = NET_MAC;
-
-/* ---- monitor de rede (w5100_netmon.h) ---- */
-static volatile uint32_t nm_rx_loops, nm_rx_frames, nm_rx_nomem, nm_tx_frames, nm_tx_errors;
-static volatile uint8_t  nm_rx_stage, nm_tx_stage;
 
 /* gerador pseudo-aleatorio (ISN do TCP, portas efemeras) */
 uint32_t rigel_rand32(void)
@@ -216,8 +231,10 @@ static struct pbuf *low_level_input(void)
     if (rsr < 2) goto out;
 
     ptr = rd16(S0_RX_RD);
+    nm_rx_stage = 4;
     len = (uint16_t)((HW_RD(RX_BASE + (ptr & BUF_MASK)) << 8) | HW_RD(RX_BASE + ((ptr + 1) & BUF_MASK)));
     if (len < 2 || len - 2 > MAX_FRAME || len > rsr) {      /* lixo: descarta tudo o que esta no buffer */
+        nm_rx_garbage++;
         wr16(S0_RX_RD, (uint16_t)(ptr + rsr));
         cmd0(CMD_RECV);
         goto out;
@@ -225,13 +242,16 @@ static struct pbuf *low_level_input(void)
     len -= 2;
     ptr += 2;
 
+    nm_rx_stage = 5;
     p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
+    nm_rx_stage = 6;
     for (q = p; q != NULL; q = q->next) {
         uint8_t *d = (uint8_t *)q->payload;
         for (i = 0; i < q->len; i++)
             d[i] = HW_RD(RX_BASE + ((ptr++) & BUF_MASK));
     }
     if (p == NULL) { nm_rx_nomem++; ptr += len; }          /* sem memoria: pula o quadro */
+    nm_rx_stage = 7;
     wr16(S0_RX_RD, ptr);
     cmd0(CMD_RECV);
 out:
@@ -254,6 +274,7 @@ static void rx_thread(void *arg)
         if (n >= 360000)    n = 6001;                      /* evita estouro do contador; nao repete o relatorio */
 
         nm_rx_loops++;
+        nm_rx_tcb = current_task;
         for (;;) {
             nm_rx_stage = 1;
             p = low_level_input();
@@ -349,6 +370,9 @@ int rigel_net_start(void)
     kernel_puts("    :w5100rx thread creating\n");
     if (sys_thread_new("w5100rx", rx_thread, &w5100_if, 8192, 1) < 0)
         return -1;
+
+    wd_start();
+
     nm_start();
     started = 1;
     return 0;

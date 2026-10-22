@@ -358,6 +358,30 @@ static void put_num(int v)
     kernel_puts(&b[i]);
 }
 
+#define RIGEL_ASSERT_HALT 0              /* 1 = trava a task como antes */
+char              rigel_assert_msg[100];
+volatile uint32_t rigel_assert_count;
+
+void rigel_lwip_assert(const char *msg, const char *file, int line)
+{
+    if (rigel_assert_count++ == 0) {     /* guarda so' o primeiro */
+        size_t i = 0;
+        const char *p;
+        for (p = msg;  *p && i < sizeof(rigel_assert_msg) - 1; p++) rigel_assert_msg[i++] = *p;
+        if (i < sizeof(rigel_assert_msg) - 1) rigel_assert_msg[i++] = '@';
+        for (p = file; *p && i < sizeof(rigel_assert_msg) - 1; p++) rigel_assert_msg[i++] = *p;
+        rigel_assert_msg[i] = '\0';
+    }
+    kernel_puts("lwIP assert: "); kernel_puts(msg);
+    kernel_puts(" @ "); kernel_puts(file);
+    kernel_puts(":"); put_num(line); kernel_puts("\r\n");
+#if RIGEL_ASSERT_HALT
+    for (;;) ;
+#endif
+}
+
+
+
 /* all = 0: so' imprime as threads com menos de 25% de pilha livre; all = 1: imprime todas */
 void rigel_stack_report(int all)
 {

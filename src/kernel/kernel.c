@@ -119,8 +119,13 @@ O loader soma a base do slot em cada R_68K_32.
 */
 void run_scheduler_test2(void)
 {
-    if (sys_spawn("/shell.elf", NULL) <= 0)
-        kprintf("Falha ao dar spawn no /shell.elf\n");
+    if (sys_spawn("/bin/shell.elf", NULL) <= 0){
+        kprintf("Falha ao dar spawn no /bin/shell.elf\n");
+        kprintf("Tentando /shell.elf\n");
+        if (sys_spawn("/shell.elf", NULL) <= 0){
+            kprintf("Falha ao dar spawn no /shell.elf\n");
+        }
+    }
     OS_Start();   /* so' agora entrega o controle pro scheduler */
 }
 /*
@@ -184,7 +189,7 @@ int kernel_main(){
     //kmalloc_init((void*)0x92000, 0x8000); ERRO FEIO PORQUE TEM VALOR CHUMBADO ESTÁTICAMENTE
     kmalloc_init(__heap_start, (uint32_t)(__heap_end - __heap_start));
 
-    kernel_puts("Rigel 0.10 kernel 0.103 Redir...\n");
+    kernel_puts("Rigel 0.10 kernel 0.104 Redir...Ajuste fix06\n");
     do_ideinit(0,NULL);
 
    kernel_puts("Ring buffer init\n");

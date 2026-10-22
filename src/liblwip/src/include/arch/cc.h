@@ -12,10 +12,12 @@
 
 extern void     kernel_puts(const char *s);
 extern uint32_t rigel_rand32(void);
+extern void rigel_lwip_assert(const char *msg, const char *file, int line);
 
 #define LWIP_RAND()  ((u32_t)rigel_rand32())
 
 #define LWIP_PLATFORM_DIAG(x)    do { } while (0)
-#define LWIP_PLATFORM_ASSERT(x)  do { kernel_puts("lwIP assert: " x "\r\n"); for (;;) ; } while (0)
+//#define LWIP_PLATFORM_ASSERT(x)  do { kernel_puts("lwIP assert: " x "\r\n"); for (;;) ; } while (0)
+#define LWIP_PLATFORM_ASSERT(x)  rigel_lwip_assert(x, __FILE__, __LINE__)
 
 #endif

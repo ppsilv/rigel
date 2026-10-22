@@ -22,8 +22,9 @@
 #include <strings.h>
 #include <ctype.h>
 #include <fcntl.h>
-#include "shell.h"
+#include <unistd.h>
 #include <rigel/rigel.h>
+#include "shell.h"
 
 
 #define MAXARGS 40

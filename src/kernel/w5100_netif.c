@@ -7,10 +7,15 @@
  * Registradores: BASE + off*2 + 1 (so' os bytes impares do barramento).
  * Recepcao: uma task (w5100rx) olha o chip a cada tick (10 ms) e entrega os quadros ao lwIP.
  * Cada quadro no buffer de RX vem precedido de 2 bytes com (tamanho do quadro + 2).
+ *
+ * Diagnostico: o watchdog (w5100_watchdog.h) e o monitor (w5100_netmon.h) escrevem no video
+ * E na serial (/dev/tty0 = DUART A), para poder copiar o log no terminal do PC.
  */
 #include <stdint.h>
 #include <string.h>
 #include <sys/scheduler.h>
+#include <sys/vfs.h>                           /* File, DeviceDriver (saida serial do monitor) */
+#include "fileio.h"
 
 #include "lwip/opt.h"
 #include "lwip/def.h"
@@ -112,9 +117,65 @@ static volatile uint8_t  nm_rx_stage, nm_tx_stage;
 static int hw_init(void);
 static err_t low_level_output_i(struct netif *netif, struct pbuf *p);
 
+/* ---- diagnostico do "quadro com tamanho invalido" ----
+ * Preenchido em low_level_input() NO INSTANTE em que o lixo e' visto (antes de descartar),
+ * impresso depois pelo netmon.
+ *   nm_g_len/nm_g_len2 : tamanho lido do cabecalho do quadro (1a e 2a leitura)
+ *   nm_g_rsr/nm_g_ptr  : RX_RSR e RX_RD nesse instante
+ *   nm_g_hdr           : os 8 primeiros bytes do buffer de RX em RX_RD
+ *   nm_g_reg           : S0_SR, S0_MR, RMSR, SHAR[0] nesse instante (o chip perdeu o estado?)
+ *   nm_rsr_max         : maior RX_RSR visto desde o ultimo status (perto de 8192 = overflow)
+ */
+static volatile uint16_t nm_rsr_max, nm_g_len, nm_g_len2, nm_g_rsr, nm_g_ptr;
+static volatile uint8_t  nm_g_hdr[8], nm_g_reg[4];
 
+/* ---- saida do monitor/watchdog: video + serial (/dev/tty0 = DUART A) ---- */
+extern DeviceDriver drivers[];
+static File         nm_ser;
+static volatile int nm_ser_state;              /* 0 = nao tentou, 1 = ok, -1 = falhou */
+
+static void nm_ser_init(void)
+{
+    int i;
+    nm_ser_state = -1;
+    memset(&nm_ser, 0, sizeof nm_ser);
+    for (i = 0; drivers[i].path != NULL; i++) {
+        if (strcmp(drivers[i].path, "/dev/tty0") == 0) {
+            if (drivers[i].open(&nm_ser, "/dev/tty0", O_RDWR) == 0 && nm_ser.write != NULL)
+                nm_ser_state = 1;
+            break;
+        }
+    }
+}
+
+static void nm_puts(const char *s)
+{
+    const char *a = s, *p;
+
+    kernel_puts(s);                            /* video (kernel_puts de verdade: ainda nao ha #define) */
+    if (nm_ser_state != 1) return;
+    for (p = s; ; p++) {                       /* serial: \n vira \r\n (o /dev/tty0 nao converte) */
+        if (*p == '\n' || *p == 0) {
+            if (p > a) nm_ser.write(&nm_ser, a, (size_t)(p - a));
+            if (*p == 0) break;
+            nm_ser.write(&nm_ser, "\r\n", 2);
+            a = p + 1;
+        }
+    }
+}
+
+/* exclusao mutua da saida: o watchdog e o netmon reagem ao MESMO evento ao mesmo tempo e,
+ * sem isto, as linhas dos dois se misturavam. Cada bloco de mensagens e' impresso entre
+ * NM_OUT_BEGIN() e NM_OUT_END() (nunca aninhar). */
+static sys_mutex_t  nm_out_lock;
+static volatile int nm_out_ok;                 /* 1 = mutex criado (em rigel_net_start) */
+#define NM_OUT_BEGIN()  do { if (nm_out_ok) sys_mutex_lock(&nm_out_lock); } while (0)
+#define NM_OUT_END()    do { if (nm_out_ok) sys_mutex_unlock(&nm_out_lock); } while (0)
+
+#define kernel_puts nm_puts                    /* vale so' para o watchdog e o netmon */
 #include "w5100_watchdog.h"
 #include "w5100_netmon.h"
+#undef kernel_puts
 
 
 static uint16_t stable16(uint16_t r)           /* RSR/FSR: leitura dupla ate estabilizar */
@@ -228,13 +289,29 @@ static struct pbuf *low_level_input(void)
 
     nm_rx_stage = 3;
     rsr = stable16(S0_RX_RSR);
+    if (rsr > nm_rsr_max) nm_rsr_max = rsr;
     if (rsr < 2) goto out;
 
     ptr = rd16(S0_RX_RD);
     nm_rx_stage = 4;
     len = (uint16_t)((HW_RD(RX_BASE + (ptr & BUF_MASK)) << 8) | HW_RD(RX_BASE + ((ptr + 1) & BUF_MASK)));
     if (len < 2 || len - 2 > MAX_FRAME || len > rsr) {      /* lixo: descarta tudo o que esta no buffer */
-        nm_rx_garbage++;
+        int k;
+        /* foto do que o chip mostra AGORA, antes de descartar */
+        nm_g_len = len; nm_g_rsr = rsr; nm_g_ptr = ptr;
+        for (k = 0; k < 8; k++)
+            nm_g_hdr[k] = HW_RD(RX_BASE + ((ptr + k) & BUF_MASK));
+        nm_g_len2 = (uint16_t)((HW_RD(RX_BASE + (ptr & BUF_MASK)) << 8) | HW_RD(RX_BASE + ((ptr + 1) & BUF_MASK)));
+        nm_g_reg[0] = HW_RD(S0_SR);
+        nm_g_reg[1] = HW_RD(S0_MR);
+        nm_g_reg[2] = HW_RD(W_RMSR);
+        nm_g_reg[3] = HW_RD(W_SHAR);
+        nm_rx_garbage++;                                    /* por ultimo: o netmon reage a mudanca deste contador */
+        if (!hw_ok()) {                                     /* o chip perdeu o estado (reset): reinicia JA, sem esperar o watchdog */
+            nm_hw_reinit++;
+            if (hw_init() != 0 || !hw_ok()) nm_hw_reinit_fail++;
+            goto out;
+        }
         wr16(S0_RX_RD, (uint16_t)(ptr + rsr));
         cmd0(CMD_RECV);
         goto out;
@@ -337,6 +414,12 @@ int rigel_net_start(void)
 
     kernel_puts("    :w5100_netif.c: rigel_net_start\n");
     if (started) return 0;
+
+    nm_ser_init();                       /* abre /dev/tty0 para o log do monitor/watchdog */
+    if (nm_ser_state != 1)
+        kernel_puts("    :monitor: /dev/tty0 indisponivel, log so' no video\n");
+
+    if (sys_mutex_new(&nm_out_lock) == ERR_OK) nm_out_ok = 1;   /* antes de criar as threads do monitor */
     if (sys_mutex_new(&hw_lock) != ERR_OK) return -1;
     if (hw_init() != 0) return -1;
 
@@ -373,7 +456,7 @@ int rigel_net_start(void)
 
     wd_start();
 
-    nm_start();
+    //nm_start();
     started = 1;
     return 0;
 }

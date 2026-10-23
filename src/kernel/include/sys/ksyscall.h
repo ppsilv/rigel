@@ -96,6 +96,7 @@
 #define SYS_HASKEY             0x1051 
 #define SYS_GETKEY             0x1052  
 #define SYS_SETCURVISIBILITY   0x1053
+#define SYS_FILLTRI            0x1054
 
 
 #endif

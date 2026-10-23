@@ -89,23 +89,3 @@ void sys_settextcolor(long txtcolor,long bgcolor){
 long sys_clrscr(void){
     run_cmd(CMD_CLEAR_SCREEN);    
 }
-long sys_drawvline(long x, long y, long h, long color){
-}
-long sys_drawhline(long x, long y, long w, long color){
-}
-long sys_drawline(long x0, long y0, long x1, long y1, long color){
-}
-long sys_drawcircle(long x0, long y0, long r, long color){
-}
-long sys_drawcirclehelper(long x0, long y0, long r, long cornername, long color){
-}
-long sys_fillcircle(long x0, long y0, long r, long color){
-}
-long sys_fillcirclehelper(long x0, long y0, long r, long cornername, long delta, long color){
-}
-long sys_drawroundrect(long x, long y, long w, long h, long r, long color){
-}
-long sys_fillroundrect(long x, long y, long w, long h, long r, long color){
-}
-long sys_fillrect(long x, long y, long w, long h, long color){
-}

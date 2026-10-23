@@ -167,17 +167,19 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_ACCEPT:     return sys_accept(a1, (void *)a2, (long *)a3);
     case SYS_CONNECT:    return sys_connect(a1, (const void *)a2, a3);
     case SYS_SETSOCKOPT: return sys_setsockopt(a1, a2, a3, (const void *)a4, a5);
-    //Graphical
-    case SYS_DRAWVLINE:          return -1;
-    case SYS_DRAWHLINE:          return -1;
-    case SYS_DRAWLINE:           return -1;
-    case SYS_DRAWCIRCLE:         return -1;
-    case SYS_DRAWCIRCLEHELPER:   return -1;
-    case SYS_FILLCIRCLE:         return -1;
-    case SYS_FILLCIRCLEHELPER:   return -1;
-    case SYS_DRAWROUNDRECT:      return -1;
-    case SYS_FILLROUNDRECT:      return -1;
-    case SYS_FILLRECT:           return -1;
+    //Graphical (a1..a7 sao os argumentos do trap0_handler; aqui so' se passam os valores)
+    case SYS_DRAWVLINE:          return sys_drawvline(a1, a2, a3, a4);
+    case SYS_DRAWHLINE:          return sys_drawhline(a1, a2, a3, a4);
+    case SYS_DRAWLINE:           return sys_drawline(a1, a2, a3, a4, a5);
+    case SYS_DRAWCIRCLE:         return sys_drawcircle(a1, a2, a3, a4);
+    case SYS_DRAWCIRCLEHELPER:   return sys_drawcirclehelper(a1, a2, a3, a4, a5);
+    case SYS_FILLCIRCLE:         return sys_fillcircle(a1, a2, a3, a4);
+    case SYS_FILLCIRCLEHELPER:   return sys_fillcirclehelper(a1, a2, a3, a4, a5, a6);
+    case SYS_DRAWROUNDRECT:      return sys_drawroundrect(a1, a2, a3, a4, a5, a6);
+    case SYS_FILLROUNDRECT:      return sys_fillroundrect(a1, a2, a3, a4, a5, a6);
+    case SYS_FILLRECT:           return sys_fillrect((short)a1, (short)a2, (short)a3, (short)a4, (short)a5);
+    case SYS_FILLTRI:             return sys_filltri((float)a1, (float)a2, (float)a3, (float)a4, (float)a5, (float)a6, (char)a7);
+
     /* ---- TODO: ainda sem implementacao ---- */
     case SYS_VGAPUTCHAR: return -1;
     case SYS_READTIME: return -1;   /* TODO */

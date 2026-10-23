@@ -120,12 +120,13 @@ O loader soma a base do slot em cada R_68K_32.
 void run_scheduler_test2(void)
 {
     if (sys_spawn("/bin/shell.elf", NULL) <= 0){
-        kprintf("Falha ao dar spawn no /bin/shell.elf\n");
-        kprintf("Tentando /shell.elf\n");
+        kernel_puts("Falha ao dar spawn no /bin/shell.elf\n");
+        kernel_puts("Tentando /shell.elf\n");
         if (sys_spawn("/shell.elf", NULL) <= 0){
-            kprintf("Falha ao dar spawn no /shell.elf\n");
+            kernel_puts("Falha ao dar spawn no /shell.elf\n");
         }
     }
+    kernel_puts("kernel initialized...\n");
     OS_Start();   /* so' agora entrega o controle pro scheduler */
 }
 /*
@@ -180,10 +181,11 @@ extern int trap0_entry(int num, long a1, long a2, long a3, long a4, long a5, lon
 extern int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6, long a7);
 
 
+
 int kernel_main(){
     kernel_puts("\n\n\n\n");
     short saved_sr;
-
+    char buf[2];
     uint32_t heap_base = (uint32_t)&__kernel_end;
     uint32_t heap_size = __estack - heap_base - 0x4000;  /* 16 KB de folga pra pilha */
     //kmalloc_init((void*)0x92000, 0x8000); ERRO FEIO PORQUE TEM VALOR CHUMBADO ESTÁTICAMENTE
@@ -221,11 +223,12 @@ int kernel_main(){
     }
     cs_leave(saved_sr);
 
+
     kernel_puts("Initializing ethernet\n");
     if( rigel_net_start() ){
         kernel_puts("Initializing ethernet FAILED...\n");
     }else{
-        kernel_puts("Eethernet SUCCESS initialized...\n");
+        kernel_puts("Ethernet SUCCESS initialized...\n");
     }
 
     kernel_puts("Loading process #1 init\n");

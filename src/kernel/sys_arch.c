@@ -500,6 +500,6 @@ void ff_mutex_give(int vol)
     sys_mutex_unlock(&Mutex[vol]); // ou sys_sem_signal
 }
 
-#endif
+#endif /*FF_FS_REENTRANT*/
 
 #endif /* !NO_SYS */

@@ -170,7 +170,7 @@ tcb_t *OS_TaskCreate(void (*entry)(void), void *arg, uint8_t *stack, uint32_t st
     tcb->sleeping   = 0;
     tcb->wake_tick  = 0;
     //foi tirado daqui e enviado para spawn/scheduler_addition.c
-    //vfs_task_init(tcb);                 /* herda stdin/stdout/stderr da task que esta criando esta */
+    vfs_task_init(tcb);                 /* herda stdin/stdout/stderr da task que esta criando esta */
 
     uint8_t *sp = stack + stack_size;
     sp = (uint8_t *)((uintptr_t)sp & ~(uintptr_t)1);   /* pilha alinhada em word, exigencia do 68k */

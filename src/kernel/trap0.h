@@ -57,7 +57,7 @@ extern long sys_gotoxy(long x, long y);
 extern long sys_gohome(void);
 extern long sys_settextcolor(long a1, long a2);
 extern long sys_clrscr(void);
-extern long sys_drawvline(long x, long y, long h, long color);
+extern long sys_drawvline(long a1, long a2, long a3, long a4);
 extern long sys_drawhline(long x, long y, long w, long color);
 extern long sys_drawline(long x0, long y0, long x1, long y1, long color);
 extern long sys_drawcircle(long x0, long y0, long r, long color);
@@ -67,6 +67,7 @@ extern long sys_fillcirclehelper(long x0, long y0, long r, long cornername, long
 extern long sys_drawroundrect(long x, long y, long w, long h, long r, long color);
 extern long sys_fillroundrect(long x, long y, long w, long h, long r, long color);
 extern long sys_fillrect(long x, long y, long w, long h, long color);
+extern long sys_filltri(float a1, float a2, float a3, float a4, float a5, float a6, char a7);
 extern long sys_chdir(const char *path);
 extern long sys_getcwd(char *buf, long size);
 

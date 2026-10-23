@@ -17,7 +17,7 @@ LDFLAGS = -T ./kernel.ld -L$(RIGELDIR)/src/liblwip -nostdlib -Map=kernel.map
 LDLIBS = -lethernet
 
 # 1. ADICIONADO: Lista de arquivos em Assembly (.S)
-ASMS =  crt0.S ctx_switch_68000.S interrupts.S ./exceptions/exceptions_asm.S trap0_entry.S ./sys_vga.S
+ASMS =  crt0.S ctx_switch_68000.S interrupts.S ./exceptions/exceptions_asm.S trap0_entry.S ./sys_vga.S sys_vga_graph.S
 
 VASMS =
 

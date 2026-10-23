@@ -157,6 +157,9 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
                         return 0; 
     case SYS_GOHOME:    sys_gohome(); 
                         return 0;
+    case SYS_SETCURVISIBILITY:
+                        sys_setcurvisibility((const char)a1);
+                        return 0;                        
     //Ethernet
     case SYS_SOCKET:     return sys_socket(a1, a2, a3);
     case SYS_BIND:       return sys_bind(a1, (const void *)a2, a3);

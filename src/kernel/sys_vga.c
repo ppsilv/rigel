@@ -1,5 +1,5 @@
 #include <stdint.h>
-
+#include <rigel/rigel.h>
 
 #define PICO_VGA_BASE 0x00FF8000
 #define WRITE_SCREEN   (*((volatile unsigned char *)(PICO_VGA_BASE + 0x01)))
@@ -41,11 +41,33 @@
 #define CMD_SET_CUR_POS     0xA3
 #define CMD_SET_TXT_COLOR   0xA2
 #define CMD_GO_HOME         0xA1
+//Graphos commands
+#define CMD_DRAW_PIXEL                  0xA0
+#define CMD_DRAW_LINE                   0xBF
+#define CMD_DRAW_VLINE                  0xBE
+#define CMD_DRAW_HLINE                  0xBD
+#define CMD_DRAW_CIRCLE                 0xBC
+#define CMD_DRAW_CIRCLEHELPER           0xBB
+#define CMD_DRAW_FILLCIRCLE             0xBA
+#define CMD_DRAW_FILLCIRCLEHELPER       0xB9
+#define CMD_DRAW_ROUNDRECT              0xB8
+#define CMD_DRAW_FILLROUNDRECT          0xB7
+#define CMD_DRAW_FILLRECT               0xB6
+#define CMD_DRAW_FILLTRIANGLE           0xB5
+#define CMD_DRAW_MULTILINE              0xB4
+#define CMD_SET_CUR_ON                  0xB3
+#define CMD_SET_CUR_OFF                 0xB2
 
 static inline void run_cmd(unsigned char cmd){
     RUN_CMD = cmd;
 }
-
+void sys_setcurvisibility(const char cur){
+    if(cur){
+        run_cmd(CMD_SET_CUR_ON); 
+    }else{
+        run_cmd(CMD_SET_CUR_OFF); 
+    }
+}
 long sys_vga_putchar(long c){
 }
 long sys_gotoxy(long x, long y){

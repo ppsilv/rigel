@@ -6,6 +6,7 @@
 extern "C" {
 #endif
 
+long rigel_setcurvisibility(const char cur);
 long rigel_vga_putchar(long c);
 long rigel_gotoxy(long x, long y);
 long rigel_gohome(void);

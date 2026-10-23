@@ -69,6 +69,7 @@ TABLE = [
   ("FLSEEK", "file", "ff_lseek", "long h, long offset, long whence"),
   ("FIOCTL", "file", "ff_ioctl", "long h, long cmd, void *arg"),
   # ---- video ----
+  ("SETCURVISIBILITY", "vga", "setcurvisibility", "const char cur"),
   ("VGAPUTCHAR", "vga", "vga_putchar", "long c"),
   ("GOTOXY",     "vga", "gotoxy",      "long x, long y"),
   ("GOHOME",     "vga", "gohome",      "void"),

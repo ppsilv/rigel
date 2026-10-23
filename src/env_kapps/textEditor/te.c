@@ -9,6 +9,7 @@ clear;clang -pthread te.c -o t
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <rigel/rigel.h>
 
 // Definições de códigos para as teclas de seta e ESC
 #define KEY_UP    0x80
@@ -62,24 +63,18 @@ static void ler_nome_arquivo(char *destino, size_t tamanho_max);
 #define LINHAS_TELA (height-2)
 
 void esconder_cursor(void) {
-    printf("\033[?25l");
-    fflush(stdout);
+    rigel_setcurvisibility(0);
 }
 
 void mostrar_cursor(void) {
-    printf("\033[?25h");
-    fflush(stdout);
+    rigel_setcurvisibility(1);
 }
 // Função para mover o cursor do terminal
 static void mover_cursor(int x, int y) {
-    // Atenção: o padrão ANSI geralmente espera (Linha, Coluna), 
-    // ou seja, (y + 1, x + 1) se você usa coordenadas a partir de 0.
-    printf("\033[%d;%dH", y + 1, x + 1);
-    fflush(stdout); // Garante que o comando seja enviado imediatamente para a tela
+    rigel_gotoxy(x,y);
 }
 static void clrscr(){
-    printf("\033[2J\033[H");
-    fflush(stdout);    
+    rigel_clrscr();
 }
 
 

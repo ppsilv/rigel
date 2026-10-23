@@ -51,6 +51,7 @@ extern long sys_readrtc(void);
 extern long sys_writertc(long rtc);
 
 /*VGA*/
+extern void sys_setcurvisibility(const char cur);
 extern long sys_vga_putchar(long c);
 extern long sys_gotoxy(long x, long y);
 extern long sys_gohome(void);

@@ -16,6 +16,7 @@
 
 .extern current_task
 .extern OS_Schedule
+.extern OS_AccountTick
 
 .extern systemTick
 .extern tick_count
@@ -81,6 +82,7 @@ OS_TickISR:
         beq.s   .notask         
         move.l  %sp,(%a0)              | tcb->sp = pilha da tarefa que estava rodando
 
+        jsr     OS_AccountTick         | current_task->ticks++ (coluna TICKS do ps)
         jsr     OS_Schedule            | decide a proxima tarefa, atualiza current_task
 
         move.l  current_task,%a0

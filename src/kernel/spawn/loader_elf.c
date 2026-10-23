@@ -152,7 +152,19 @@ int load_elf_spawn(FIL *fd, int argc, char *argv[], int *pid)
         /* id = OS_SLOT_ID_BASE + slot: e' assim que o OS_Reap sabe qual slot liberar */
         tcb_t *tcb = OS_TaskCreate(entry_fn, NULL, task_stack, TASK_STACK_SIZE - ARGS_AREA,
                                    OS_SLOT_ID_BASE + slot);
-        if (!tcb) { kprintf("Falha ao criar task.\n"); goto fail; }
+        if (!tcb) { 
+            kprintf("Falha ao criar task.\n"); goto fail; 
+        }
+        
+ 
+            const char *nm = (argc > 0 && argv[0]) ? argv[0] : "?";
+            const char *p;
+            for (p = nm; *p; p++)
+                if (*p == '/')
+                    nm = p + 1;          /* "/bin/ls.elf" -> "ls.elf" */
+            OS_TaskSetName(tcb, nm);
+                       
+        
         if (pid) *pid = OS_SLOT_ID_BASE + slot;
         return 0;   /* o slot agora pertence a' task */
     }

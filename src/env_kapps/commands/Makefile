@@ -16,6 +16,7 @@ CC    := $(CROSS)gcc
 CFLAGS  := -m68000 -Wall -Os -ffreestanding -fomit-frame-pointer \
            -ffunction-sections -fdata-sections \
            -I $(LIBRIGEL)/include  -I$(RIGELDIR)/include -D_PRINTF_FLOAT_NOT_FOUND \
+		   -I $(RIGELDIR)/src/kernel/include \
 		   -include lixo/fix_winnt.h
 
 # -Wl,-q = guarda as relocacoes (o loader do kernel precisa delas). NAO use -s / strip.
@@ -23,7 +24,7 @@ LDFLAGS := -m68000 -nostartfiles -T $(LIBRIGEL)/lib/app.ld -Wl,-q -Wl,--gc-secti
            -L $(LIBRIGEL)/lib $(if $(NEWLIB_LIB),-L $(NEWLIB_LIB))
 LDLIBS  := -Wl,--start-group -lrigel -lc -lgcc -Wl,--end-group
 
-APPS := lsr cp chmod mv head tail
+APPS := lsr cp chmod mv head tail ps kill
 
 all: $(addsuffix .elf,$(APPS))
 

@@ -169,6 +169,8 @@ tcb_t *OS_TaskCreate(void (*entry)(void), void *arg, uint8_t *stack, uint32_t st
     tcb->next       = NULL;
     tcb->sleeping   = 0;
     tcb->wake_tick  = 0;
+    tcb->ticks      = 0;
+    tcb->name[0]    = '\0';       /* quem cria a task chama OS_TaskSetName() */
     //foi tirado daqui e enviado para spawn/scheduler_addition.c
     vfs_task_init(tcb);                 /* herda stdin/stdout/stderr da task que esta criando esta */
 
@@ -234,6 +236,8 @@ void OS_Reap(void)
         if (t->id >= OS_SLOT_ID_BASE)
             Slots_Free(t->id - OS_SLOT_ID_BASE);
         t->sleeping = 0;
+        t->ticks    = 0;
+        t->name[0]  = '\0';
         t->state = TASK_UNUSED;
     }
     irq_restore(sr);
@@ -359,4 +363,72 @@ void OS_SleepTicks(uint32_t ticks)
 
     while (me->state == TASK_BLOCKED)      /* so' acontece se nao havia mais ninguem pronto */
         OS_Yield();
+}
+
+/* ==================================================================
+ * ps / kill  (usadas por sys_ctl.c)
+ * ================================================================== */
+
+void OS_TaskSetName(tcb_t *t, const char *name)
+{
+    int i;
+    if (t == NULL)
+        return;
+    for (i = 0; name != NULL && name[i] != '\0' && i < OS_TASK_NAME_MAX - 1; i++)
+        t->name[i] = name[i];
+    t->name[i] = '\0';
+}
+
+/* chamada pelo OS_TickISR (asm), com IRQ ja' mascarada pelo proprio tick */
+void OS_AccountTick(void)
+{
+    if (current_task)
+        current_task->ticks++;
+}
+
+tcb_t *OS_TaskAt(int index)
+{
+    if (index < 0 || index >= OS_MAX_TASKS)
+        return NULL;
+    return &task_pool[index];
+}
+
+/*
+ * Passo 1 do kill (task que NAO e' a atual): tira a task do round robin e
+ * marca TASK_KILLING. Nesse estado ela nao e' escalada, nao e' acordada
+ * (OS_TaskWake/wake_sleepers so' mexem em BLOCKED), nao e' recolhida pelo
+ * OS_Reap (so' recolhe DEAD) e o TCB nao e' reaproveitado (so' UNUSED).
+ * Assim da' pra fechar os fds dela com calma, com IRQ habilitada.
+ */
+tcb_t *OS_TaskKillBegin(int id)
+{
+    tcb_t *found = NULL;
+    uint16_t sr = irq_save();
+
+    for (int i = 0; i < OS_MAX_TASKS; i++) {
+        tcb_t *t = &task_pool[i];
+        if (t->id == id && t->state != TASK_UNUSED &&
+            t->state != TASK_DEAD && t->state != TASK_KILLING) {
+            found = t;
+            break;
+        }
+    }
+    if (found != NULL && found != current_task) {
+        ready_remove(found);
+        found->sleeping = 0;
+        found->state    = TASK_KILLING;
+    } else {
+        found = NULL;           /* nao achou, ou e' a propria task (use OS_TaskExit) */
+    }
+    irq_restore(sr);
+    return found;
+}
+
+/* Passo 2 do kill: fds ja fechados; agora o OS_Reap pode liberar o slot e o TCB. */
+void OS_TaskKillEnd(tcb_t *t)
+{
+    uint16_t sr = irq_save();
+    if (t != NULL && t->state == TASK_KILLING)
+        t->state = TASK_DEAD;
+    irq_restore(sr);
 }

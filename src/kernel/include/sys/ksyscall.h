@@ -91,7 +91,9 @@
 #define SYS_SOCKET             0x0053 
 #define SYS_OPENPTY            0x0054
 #define SYS_SPAWN_IO           0x0055
- 
+#define SYS_PS                 0x0056 
+#define SYS_KILL               0x0057 
+
 #define SYS_GETUPTIME          0x1050
 #define SYS_HASKEY             0x1051 
 #define SYS_GETKEY             0x1052  

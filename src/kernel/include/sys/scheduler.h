@@ -6,13 +6,15 @@
 #define OS_MAX_TASKS   12   /* era 8: uma sessao telnet usa 2 tasks (telnetd + shell) */
 #define OS_MAX_FDS     32   /* descritores por task (a tabela fica dentro do tcb) */
 #define OS_SLOT_ID_BASE  1000
+#define OS_TASK_NAME_MAX 32   /* 31 caracteres + NUL (mostrado pelo ps) */
 
 typedef enum {
     TASK_UNUSED = 0,
     TASK_READY,
     TASK_RUNNING,
     TASK_BLOCKED,
-    TASK_DEAD          /* <- NOVO */
+    TASK_DEAD,         /* <- NOVO */
+    TASK_KILLING       /* kill em andamento: ja saiu da fila, ainda fechando fds (ninguem reaproveita o TCB) */
 } task_state_t;
 
 /*
@@ -34,6 +36,8 @@ typedef struct tcb {
     uint32_t      wake_tick;   /* se 'sleeping': acorda quando systemTick chegar aqui */
     uint8_t       sleeping;    /* 1 = bloqueada por OS_SleepTicks (o tick a acorda sozinho) */
     struct File  *fds[OS_MAX_FDS]; /* descritores da task (vfs.c); 0..2 herdados do pai. Fica DEPOIS de 'sp' (offset 0) */
+    uint32_t      ticks;       /* ticks de CPU usados (OS_AccountTick, chamada pelo OS_TickISR) -- para o ps */
+    char          name[OS_TASK_NAME_MAX]; /* nome mostrado pelo ps (OS_TaskSetName) */
 } tcb_t;
 
 /* current_task precisa ser global e visivel pro assembly (ctx_switch_*.s usa .extern current_task) */
@@ -56,6 +60,14 @@ void   OS_Schedule(void);     /* chamado pelo OS_TickISR (asm) a cada tick de ti
 void   OS_TaskExit(void);     /* para onde uma tarefa cai se a funcao dela retornar */
 void  *OS_TaskArg(void);      /* le o 'arg' da tarefa atualmente rodando */
 void   OS_Reap(void);
+
+/* ---- usadas pelo ps e kill (sys_ctl.c) ---- */
+void   OS_TaskSetName(tcb_t *t, const char *name);   /* copia o nome (corta em 31 caracteres) */
+void   OS_AccountTick(void);                         /* chamada pelo OS_TickISR (asm): current_task->ticks++ */
+tcb_t *OS_TaskAt(int index);                         /* TCB do pool (0..OS_MAX_TASKS-1); so' leitura */
+tcb_t *OS_TaskKillBegin(int id);                     /* tira a task do round robin; NULL se nao existe/e' a atual */
+void   OS_TaskKillEnd(tcb_t *t);                     /* depois de fechar os fds: marca DEAD (o OS_Reap libera o slot) */
+int    OS_TaskAlive(int id);
 
 /*
  * OS_TaskBlock: tira 'task' da fila de prontas. Ela para de receber

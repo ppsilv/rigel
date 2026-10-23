@@ -41,6 +41,8 @@ TABLE = [
   ("SPAWN",  "proc", "spawn",  "char *path, char **argv"),
   ("SPAWN_IO",  "proc", "spawn_io",  "const char *p, char **a, int i, int o, int e"),
   ("WAITPID","proc", "waitpid","long pid"),
+  ("PS","proc", "ps","void *buf, long max"),
+  ("KILL","proc", "kill","long pid, long sig"),
   ("SLEEP",  "proc", "sleep",  "long ticks"),
   ("YIELD",  "proc", "yield",  "void"),
   ("SETRAMVECTOR", "proc", "setramvector", "long stub_addr, long handler_addr"),

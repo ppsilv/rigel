@@ -25,6 +25,8 @@
         SYSCALL rigel_spawn                  0x0001   /* SYS_SPAWN */
         SYSCALL rigel_spawn_io               0x0055   /* SYS_SPAWN_IO */
         SYSCALL rigel_waitpid                0x004F   /* SYS_WAITPID */
+        SYSCALL rigel_ps                     0x0056   /* SYS_PS */
+        SYSCALL rigel_kill                   0x0057   /* SYS_KILL */
         SYSCALL rigel_sleep                  0x0002   /* SYS_SLEEP */
         SYSCALL rigel_yield                  0x0003   /* SYS_YIELD */
         SYSCALL rigel_setramvector           0x0045   /* SYS_SETRAMVECTOR */

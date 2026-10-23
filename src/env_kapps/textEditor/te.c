@@ -471,9 +471,14 @@ int main(int argc, char **argv) {
     printf("[OS-68k] Editor iniciado. Digite algo (ESC para sair):\n");
     clrscr();
     // Loop real de leitura de teclado
+    rigel_ioctl(0, TIOC_SETMODE, (void *)(long)(TTY_RAW | TTY_NOECHO));
+
     while (1) {
-        int tecla = getkey(); // Lê a tecla do terminal (bloqueia até você digitar algo)
-        btecla[0] = tecla;
+        unsigned char tecla=0,c;
+        if (read(0, &c, 1) != 1)
+            continue;
+//        int tecla = getkey(); // Lê a tecla do terminal (bloqueia até você digitar algo)
+        tecla = c;
         if( tecla == KEY_CTRLL ){
             mover_cursor(0,30);
             //mtx_lock(&//mutex_tela);
@@ -525,7 +530,7 @@ int main(int argc, char **argv) {
             break; // ESC para sair
         }
     }
-
+    rigel_ioctl(0, TIOC_SETMODE, (void *)0);   /* restaura modo normal */
     //restaurar_terminal(&terminal_original);
     return 0;
 }

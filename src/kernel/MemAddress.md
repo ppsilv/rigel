@@ -48,8 +48,7 @@ Faixa de endereços de I/O 0xF00000 a 0xFFFFFF
  Memória: de 0x000000 a 0xEFFFFF = 15.728.639 15MBytes
 .____________________________________
 |Atual:                |  antigo     |
-|PicoIDE  0 0xFF4000UL | 0xFF4000UL  |--->SEM USO POR ENQUANTO.
-|IDE disk 0 0xFF4400UL | 0xFF4400UL  |
+|Pico IDE 0 0xFF4400UL | 0xFF4400UL  |
 |PicoVGA  0 0xFF8000UL | 0xFF8000UL  |
 |Ethernet 0 0xFE0000UL | 0xFE0000UL  |
 |Duart    0 0xFF9000UL | 0xFF9000UL  |

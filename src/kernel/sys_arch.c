@@ -458,4 +458,48 @@ sys_thread_t sys_thread_new(const char *name, void (*function)(void *), void *ar
     return (sys_thread_t)id;
 }
 
+/* ================================================================
+ * 7. Fatfs mutexes
+ * ================================================================ */
+
+#if FF_FS_REENTRANT
+
+/* Sua estrutura ou tipo de mutex/semáforo do sistema */
+static sys_mutex_t Mutex[FF_VOLUMES + 1];
+
+int ff_mutex_create(int vol)
+{
+    // Sua função sys_mutex_new retorna um err_t (ex: ERR_OK ou 0 para sucesso)
+    err_t err = sys_mutex_new(&Mutex[vol]);
+    return (err == 0); // Retorna 1 se sucesso, 0 se falha
+}
+
+void ff_mutex_delete(int vol)
+{
+    sys_mutex_free(&Mutex[vol]);
+}
+
+int ff_mutex_take(int vol)
+{
+    // Passa o timeout configurado no FatFS (FF_FS_TIMEOUT) para a sua função
+    u32_t timeout_val = FF_FS_TIMEOUT; 
+    
+    u32_t res = sys_arch_sem_wait((sys_sem_t *)&Mutex[vol], timeout_val);
+    
+    // Se estourou o tempo, retorna 0 (falha/timeout para o FatFS)
+    if (res == SYS_ARCH_TIMEOUT) {
+        return 0; 
+    }
+    
+    // Qualquer outro retorno significa que conseguiu pegar o mutex
+    return 1; 
+}
+
+void ff_mutex_give(int vol)
+{
+    sys_mutex_unlock(&Mutex[vol]); // ou sys_sem_signal
+}
+
+#endif
+
 #endif /* !NO_SYS */

@@ -3,7 +3,7 @@
 /*------------------------------------------------------------------------*/
 
 #include "fatfs/ff.h"
-
+#include <lwip/sys.h>
 
 #if FF_USE_LFN == 3	/* Use dynamic memory allocation */
 
@@ -39,7 +39,7 @@ void ff_memfree (
 /* Definitions of Mutex                                                   */
 /*------------------------------------------------------------------------*/
 
-#define OS_TYPE	0	/* 0:Win32, 1:uITRON4.0, 2:uC/OS-II, 3:FreeRTOS, 4:CMSIS-RTOS */
+#define OS_TYPE	5	/* 0:Win32, 1:uITRON4.0, 2:uC/OS-II, 3:FreeRTOS, 4:CMSIS-RTOS, 5:rigelOS */
 
 
 #if   OS_TYPE == 0	/* Win32 */
@@ -63,6 +63,9 @@ static SemaphoreHandle_t Mutex[FF_VOLUMES + 1];	/* Table of mutex handle */
 #elif OS_TYPE == 4	/* CMSIS-RTOS */
 #include "cmsis_os.h"
 static osMutexId Mutex[FF_VOLUMES + 1];	/* Table of mutex ID */
+
+#elif OS_TYPE == 5	/* rigelOS */
+static sys_mutex_t Mutex[FF_VOLUMES + 1];	/* Table of mutex handle */
 
 #endif
 
@@ -106,6 +109,9 @@ int ff_mutex_create (	/* Returns 1:Function succeeded or 0:Could not create the 
 	Mutex[vol] = osMutexCreate(osMutex(cmsis_os_mutex));
 	return (int)(Mutex[vol] != NULL);
 
+#elif OS_TYPE == 5	/* rigelOS */
+	return (int)(sys_mutex_new(&Mutex[vol]) == 0);
+
 #endif
 }
 
@@ -137,6 +143,9 @@ void ff_mutex_delete (	/* Returns 1:Function succeeded or 0:Could not delete due
 
 #elif OS_TYPE == 4	/* CMSIS-RTOS */
 	osMutexDelete(Mutex[vol]);
+
+#elif OS_TYPE == 5	/* rigelOS */
+	sys_mutex_free(&Mutex[vol]);
 
 #endif
 }
@@ -171,6 +180,10 @@ int ff_mutex_take (	/* Returns 1:Succeeded or 0:Timeout */
 #elif OS_TYPE == 4	/* CMSIS-RTOS */
 	return (int)(osMutexWait(Mutex[vol], FF_FS_TIMEOUT) == osOK);
 
+#elif OS_TYPE == 5	/* rigelOS */
+	u32_t res = sys_arch_sem_wait((sys_sem_t *)&Mutex[vol], FF_FS_TIMEOUT);
+	return (int)(res != SYS_ARCH_TIMEOUT);
+
 #endif
 }
 
@@ -201,8 +214,10 @@ void ff_mutex_give (
 #elif OS_TYPE == 4	/* CMSIS-RTOS */
 	osMutexRelease(Mutex[vol]);
 
+#elif OS_TYPE == 5	/* rigelOS */
+	sys_mutex_unlock(&Mutex[vol]);
+
 #endif
 }
 
 #endif	/* FF_FS_REENTRANT */
-

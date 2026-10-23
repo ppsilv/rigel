@@ -25,7 +25,7 @@ endif
 
 CPU     ?= -m68000
 # nano.specs = newlib-nano (bem menor, ideal para ROM de 32K/64K)
-CFLAGS  := $(CPU) -Wall -Os -ffreestanding -fomit-frame-pointer -ffunction-sections -fdata-sections -I kernel -I $(RIGELDIR)/include -I ./include
+CFLAGS  := $(CPU) -Wall -Os -ffreestanding -fomit-frame-pointer -ffunction-sections -fdata-sections -I kernel -I $(RIGELDIR)/include -I ./include -include lixo/fix_winnt.h
 LDFLAGS := $(CPU) -T rigel.ld -nostartfiles -Wl,--gc-sections -Wl,-Map=rigel.map
 # crt0 e' nosso; libc/libgcc entram automaticamente
 LDLIBS  := -L$(RIGELDIR)/lib -Wl,--start-group -lc -lgcc -Wl,--end-group

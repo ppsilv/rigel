@@ -171,7 +171,7 @@ tcb_t *OS_TaskCreate(void (*entry)(void), void *arg, uint8_t *stack, uint32_t st
     tcb->wake_tick  = 0;
     tcb->ticks      = 0;
     tcb->name[0]    = '\0';       /* quem cria a task chama OS_TaskSetName() */
-    //foi tirado daqui e enviado para spawn/scheduler_addition.c
+    
     vfs_task_init(tcb);                 /* herda stdin/stdout/stderr da task que esta criando esta */
 
     uint8_t *sp = stack + stack_size;

@@ -450,11 +450,13 @@ sys_thread_t sys_thread_new(const char *name, void (*function)(void *), void *ar
     }
 
     id = next_id++;
-    if (OS_TaskCreate(thread_tramp, ts, stack, (uint32_t)stacksize, id) == NULL) {
+    tcb_t *tt = OS_TaskCreate(thread_tramp, ts, stack, (uint32_t)stacksize, id);
+    if ( tt == NULL) {
         kfree(ts);
         kfree(stack);
         return -1;
     }
+    OS_TaskSetName(tt, name); 
     return (sys_thread_t)id;
 }
 

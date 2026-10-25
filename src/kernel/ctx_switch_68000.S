@@ -21,7 +21,6 @@
 .extern systemTick
 .extern tick_count
 .extern tick_uptime
-.extern day_uptime
 
 OS_StartHighRdy:
     move.l  current_task,%A0       | %A0 = ponteiro pro TCB atual
@@ -42,16 +41,16 @@ OS_TickISROLD:
     rte                            | volta a executar de onde ela parou
 
 OS_TickISR:
+        move.b  #0x08,0xFF901D
         movem.l %d0-%d7/%a0-%a6,-(%sp)
 
         move.l  #systemTick,%a0
         addq.l  #1,(%a0)
 
-        move.l  #tick_uptime,%a0
-        addq.l  #1,(%a0)
-        cmpi.l  #510000,tick_count
-        beq.s   .action_uptime
-        
+
+
+
+/*        
 .continua:
         addq.w  #1,tick_count
         cmpi.w  #400,tick_count
@@ -59,12 +58,6 @@ OS_TickISR:
         cmpi.w  #800,tick_count
         beq.s   .action_200
         bra.s   .do_schedule
-
-.action_uptime:
-        move.l  #day_uptime,%a0
-        addq.l  #1,(%a0)
-        move.l  #0,tick_uptime
-        bra.s   .continua
 
 .action_100:
         move.b  #0x08,0xFF901D
@@ -74,7 +67,7 @@ OS_TickISR:
         move.b  #0x08,0xFF901F
         clr.w   tick_count
         | cai direto pra .do_schedule
-
+*/
 .do_schedule:
         move.l  current_task,%a0
         move.l  %a0, %d0        | copia pra D0
@@ -89,8 +82,9 @@ OS_TickISR:
         move.l  (%a0),%sp              | pilha vira a da tarefa escolhida
 .notask:
         movem.l (%sp)+,%d0-%d7/%a0-%a6
+        move.b  #0x08,0xFF901F
         rte
-
+*/
 |
 | OS_Yield -- a task atual larga a CPU AGORA (sem esperar o tick).
 |

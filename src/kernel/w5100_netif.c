@@ -372,11 +372,6 @@ static void rx_thread(void *arg)
                 pbuf_free(p);
             DBG("  RX entregue ao lwIP\n");
         }
-        /* new_schduler
-        t = systemTick;                                     // espera o proximo tick
-        while (systemTick == t)
-           ;
-        */        
         OS_SleepTicks(1);   
     }
 }

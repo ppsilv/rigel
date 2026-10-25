@@ -11,6 +11,14 @@
 #include <sys/ksyscall.h>
 #include <sys/sys_ctl.h>
 
+/*
+ * App de usuario = task criada pelo loader, com id de SLOT: OS_SLOT_ID_BASE .. +SLOT_COUNT-1.
+ * Qualquer outro id e' task do kernel. Atencao: as threads do lwIP (tcpip, w5100rx, netmon...)
+ * tem ids 2000+, que sao >= OS_SLOT_ID_BASE mas NAO sao slots -- "id >= OS_SLOT_ID_BASE" sozinho
+ * nao serve para separar app de kernel.
+ */
+#define IS_APP_ID(id)  ((id) >= OS_SLOT_ID_BASE && (id) < OS_SLOT_ID_BASE + SLOT_COUNT)
+
 /* vfs.c: fecha todos os fds da task */
 extern void vfs_task_exit(tcb_t *t);
 
@@ -65,8 +73,8 @@ int32_t sys_ps(task_info_t *buf, uint32_t max)
         o->state = (uint8_t)t->state;
         o->flags = 0;
         o->base  = 0;
-        if (t->id < OS_SLOT_ID_BASE)
-            o->flags |= PS_F_KERNEL;            /* task linkada no kernel */
+        if (!IS_APP_ID(t->id))
+            o->flags |= PS_F_KERNEL;            /* task linkada no kernel (inclui as threads do lwIP) */
         else
             o->base = Slots_BaseAddr(t->id - OS_SLOT_ID_BASE);
         if (t->sleeping)
@@ -98,8 +106,8 @@ int32_t sys_kill(uint32_t pid, uint32_t sig)
 
     if (!OS_TaskAlive((int)pid))
         return K_ESRCH;
-    if ((int)pid < OS_SLOT_ID_BASE)
-        return K_EPERM;                         /* task do kernel */
+    if (!IS_APP_ID((int)pid))
+        return K_EPERM;                         /* task do kernel (inclui tcpip/w5100rx/netmon: ids 2000+) */
     if (sig == SIG_CHECK)
         return 0;
 

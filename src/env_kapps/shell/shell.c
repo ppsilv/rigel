@@ -38,12 +38,14 @@
 #define SH_O_APPEND   0x10
 
 /* fds reservados: copia do stdin/stdout originais enquanto ha redirecionamento */
-#define SH_FD_SAVE_IN    253
-#define SH_FD_SAVE_OUT   254
+#define SH_FD_SAVE_IN    30
+#define SH_FD_SAVE_OUT   31
 
 extern int process_command_executable( int argc, char *argv[]);
 
 void printerro(int eno);
+static void redir_restore(int saved_in, int saved_out);
+
 
 extern void do_help(int argc, char *argv[]);
 extern void do_load(int argc, char *argv[]);
@@ -317,13 +319,23 @@ static int redir_apply(const redir_t *rd, int *saved_in, int *saved_out)
     }
 
     if (fin >= 0) {
-        rigel_dup(0, SH_FD_SAVE_IN);                        /* guarda o stdin original */
+        if (rigel_dup(0, SH_FD_SAVE_IN) < 0) {
+            fprintf(stderr, "shell: dup do stdin falhou\n");
+            close(fin);
+            if (fout >= 0) close(fout);
+            return -1;
+        }
         rigel_dup(fin, 0);                                  /* stdin passa a ser o arquivo */
-        close(fin);                                         /* o fd 0 mantem o arquivo aberto */
+        close(fin);
         *saved_in = 1;
     }
     if (fout >= 0) {
-        rigel_dup(1, SH_FD_SAVE_OUT);
+        if (rigel_dup(1, SH_FD_SAVE_OUT) < 0) {
+            fprintf(stderr, "shell: dup do stdout falhou\n");
+            close(fout);
+            if (*saved_in) redir_restore(1, 0);             /* desfaz o stdin que ja tinha trocado */
+            return -1;
+        }
         rigel_dup(fout, 1);
         close(fout);
         *saved_out = 1;

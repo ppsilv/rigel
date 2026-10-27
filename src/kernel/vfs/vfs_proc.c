@@ -19,7 +19,7 @@ typedef struct {
 // ============================================
 int get_total_memory(void) { return 1024; }
 int get_kfree_memory(void)  { return 512; }
-const char *get_cpu_name(void) { return "Motorola 68000"; }
+const char *get_cpu_name(void) { return "Motorola MC68K"; }
 int get_cpu_clock(void) { return 8; }
 
 // ============================================

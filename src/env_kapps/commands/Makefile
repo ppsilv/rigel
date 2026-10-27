@@ -24,7 +24,7 @@ LDFLAGS := -m68000 -nostartfiles -T $(LIBRIGEL)/lib/app.ld -Wl,-q -Wl,--gc-secti
            -L $(LIBRIGEL)/lib $(if $(NEWLIB_LIB),-L $(NEWLIB_LIB))
 LDLIBS  := -Wl,--start-group -lrigel -lc -lgcc -Wl,--end-group
 
-APPS := lsr cp chmod mv head tail ps kill
+APPS := lsr cp chmod mv head tail ps kill settime
 
 all: $(addsuffix .elf,$(APPS))
 

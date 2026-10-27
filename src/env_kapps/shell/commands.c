@@ -259,9 +259,7 @@ void do_ls(int argc, char *argv[]){
 
     printf("%d arquivo(s), %lu bytes, %d diretorio(s)\n", files, total, dirs);    
 }
-void do_time(int argc, char *argv[]){
 
-}
 void do_shst(int argc, char *argv[]){
     printf("Systemtick: %ld\n",rigel_getsystemtick());
 }

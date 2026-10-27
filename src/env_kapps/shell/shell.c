@@ -62,6 +62,8 @@ extern void shell_prompt(char *buf, size_t n);
 extern void do_time(int argc, char *argv[]);
 extern void do_shst(int argc, char *argv[]);
 extern void do_manual(int argc, char *argv[]);
+extern void do_time(int argc, char *argv[]);
+extern void do_date(int argc, char *argv[]);
 
 /* ------------------------------------------------------------------ comandos novos */
 static int shell_quit;                       /* 1 = o comando exit foi digitado */
@@ -145,6 +147,8 @@ const cmd_entry_t g_cmd_table[] = {
     {"meminfo",     0,  0, &do_meminfo,     "Show memory information (/proc/meminfo)" },
     {"exit",        0,  0, &do_exit,        "Leave the shell" },
     {"help",	    0,  0, &do_help,	    "Show available commands" },
+    {"time",        0,  0, &do_time,        "Show the current time" },
+    {"date",        0,  0, &do_date,        "Show the current date" },
 
     {0, 0, 0, 0, 0 }
 };

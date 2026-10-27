@@ -13,6 +13,9 @@
 #include <sys/scheduler.h>
 #include "elf_reloc.h"
 
+#define DEBUG 0
+#define DEBUG_ELF if(DEBUG == 1)
+
 #define TASK_STACK_SIZE  8192
 #define ARGS_AREA        1024      /* bloco argc/argv no topo da pilha da task */
 #define ARGS_MAX         16
@@ -66,7 +69,7 @@ int load_elf_spawn(FIL *fd, int argc, char *argv[], int *pid)
     int slot = Slots_Alloc();
     if (slot < 0) { kprintf("Sem slots livres.\n"); return -1; }
     uint32_t task_base = Slots_BaseAddr(slot);
-
+DEBUG_ELF kprintf("Addressn chosed[%08x]\n",task_base);
     f_lseek(fd, 0);
     if (f_read(fd, hb, sizeof hb, &n) != FR_OK || n != sizeof hb) {
         kprintf("Nao leu o header do ELF.\n"); goto fail;
@@ -88,7 +91,7 @@ int load_elf_spawn(FIL *fd, int argc, char *argv[], int *pid)
     uint16_t phnum     = BE16(hb,0x2C);
     uint16_t shentsize = BE16(hb,0x2E);
     uint16_t shnum     = BE16(hb,0x30);
-
+DEBUG_ELF kprintf("entry=[%08x]\n",entry);
     for (uint16_t i = 0; i < phnum; i++) {
         f_lseek(fd, phoff + (uint32_t)i * phentsize);
         if (f_read(fd, &ph, sizeof ph, &n) != FR_OK || n != sizeof ph) {
@@ -136,9 +139,9 @@ int load_elf_spawn(FIL *fd, int argc, char *argv[], int *pid)
         goto fail;
     }
 
-    //kprintf("slot=%02d base=0x%08lx size=0x%lx relocs=%lu entry=0x%08lx\n",
-    //        slot, (unsigned long)task_base, (unsigned long)image_size,
-    //        (unsigned long)applied, (unsigned long)(task_base + entry));
+DEBUG_ELF kprintf("slot=%02d base=0x%08lx size=0x%lx relocs=%lu entry=0x%08lx\n",
+            slot, (unsigned long)task_base, (unsigned long)image_size,
+            (unsigned long)applied, (unsigned long)(task_base + entry));
 
     {
         void (*entry_fn)(void) = (void (*)(void))(task_base + entry);

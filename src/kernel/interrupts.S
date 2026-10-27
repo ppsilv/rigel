@@ -34,9 +34,7 @@ Int3Handler:
         /*MOVE.B  %D0,0x00FF8001*/   /*Ecoa no video, aqui está correto o valor da tecla*/
         MOVE.L  %D0, -(%A7)       /*; Empilha 4 bytes (mantém A7 alinhado em par)*/
         
-        move.w  #0x2700, %sr  /*Disable all interrupts supervisor mode*/       
         jsr     ring_buf_put
-        move.w  #0x2000, %sr  /*Enable all interrupts supervisor mode*/    
         
         ADDQ.L  #4,%A7          /*; Limpa os 4 bytes da pilha!*/
 

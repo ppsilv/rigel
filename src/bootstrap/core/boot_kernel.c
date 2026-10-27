@@ -8,6 +8,7 @@
 
 
 static struct bootinfo * const bi = (struct bootinfo *)BOOTINFO_ADDR;
+void printString(char *str);
 
 int boot_load_kernel(const char *path)
 {
@@ -19,24 +20,34 @@ int boot_load_kernel(const char *path)
     FRESULT r = f_open(&f, path, FA_READ);
     if (r != FR_OK) {
         if( r == 5 ){
-            printf("File or directory does not exist...\n");
+            printString("File or directory does not exist...\n");
         }
-        printf("kernel: nao abriu %s (FRESULT %d)\n", path, (int)r);
+        //printf("kernel: nao abriu %s (FRESULT %d)\n", path, (int)r);
+        printString("kernel: nao abriu \n");
         return BK_OPEN;
     }    
     size = (uint32_t)f_size(&f);                         /* FS */
 
-    if (size < 16) { f_close(&f); printf("kernel: arquivo vazio\n"); return BK_EMPTY; }
+    if (size < 16) { 
+        f_close(&f); 
+        printString("kernel: arquivo vazio\n"); 
+        return BK_EMPTY; 
+    }
     if (size > KERNEL_LIMIT - KERNEL_BASE) {
-        f_close(&f); printf("kernel: grande demais (%lu)\n", (unsigned long)size);
+        f_close(&f); 
+        //printf("kernel: grande demais (%lu)\n", (unsigned long)size);
+        printString("kernel: grande demais \n");
         return BK_TOOBIG;
     }
 
-    printf("kernel: %lu bytes -> 0x%lx ", (unsigned long)size, KERNEL_BASE);
+    //printf("kernel: %lu bytes -> 0x%lx ", (unsigned long)size, KERNEL_BASE);
+    printString("kernel: Will be loaded...\n");
     while (done < size) {
         UINT n = (size - done > CHUNK) ? CHUNK : (UINT)(size - done);
         if (f_read(&f, dst + done, n, &got) != FR_OK || got != n) {   /* FS */
-            f_close(&f); printf("\nkernel: erro de leitura em %lu\n", (unsigned long)done);
+            f_close(&f); 
+            //printf("\nkernel: erro de leitura em %lu\n", (unsigned long)done);
+            printString("\nkernel: erro de leitura \n");
             return BK_READ;
         }
         done += got;

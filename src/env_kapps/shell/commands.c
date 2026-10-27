@@ -217,7 +217,12 @@ void do_cat(int argc, char *argv[])
     close(fd);
 }
 void do_uptime(int argc, char *argv[]){
-    printf("uptime for %d day(s)\n",rigel_getuptime());
+    long sys_systemtick = rigel_getsystemtick();
+    long hours = sys_systemtick / 360000;
+    long days = hours / 24;
+    long months = days / 12;
+    
+    printf("uptime mon: %ld : day: %ld hours: %ld\n",months,days,hours);
 }
 
 void do_ls(int argc, char *argv[]){
@@ -258,6 +263,7 @@ void do_time(int argc, char *argv[]){
 
 }
 void do_shst(int argc, char *argv[]){
+    printf("Systemtick: %ld\n",rigel_getsystemtick());
 }
 void do_manual(int argc, char *argv[]){
     printf("\n%s\n",manual);

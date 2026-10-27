@@ -148,6 +148,7 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_DUP:       return vfs_dup((int)a1, (int)a2);
     case SYS_PS:        return sys_ps((task_info_t *)a1, (uint32_t)a2);
     case SYS_KILL:      return sys_kill((uint32_t)a1, (uint32_t)a2);
+    case SYS_SYSTEMTICK: return sys_getsystemtick();
 
     case SYS_SETRAMVECTOR:  sys_setramvector((long)a1, (long)a2);
                         return 0;

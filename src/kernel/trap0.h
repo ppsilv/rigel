@@ -70,6 +70,7 @@ extern long sys_fillrect(long x, long y, long w, long h, long color);
 extern long sys_filltri(float a1, float a2, float a3, float a4, float a5, float a6, char a7);
 extern long sys_chdir(const char *path);
 extern long sys_getcwd(char *buf, long size);
+extern long sys_getsystemtick(void);
 
 extern long sys_socket(long d, long t, long p);
 extern long sys_bind(long fd, const void *a, long len);

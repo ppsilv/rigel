@@ -3,65 +3,68 @@
 #include "duarts.h"
 #include "bootinfo.h"
 #include "ff.h"
+#include "diskio.h"	
 
 uint32_t tick_count=0;
 uint32_t systemTick=0;
 
-uint8_t *WR_CHAR=(uint8_t *)0xFF912B;
+//uint8_t *WR_CHAR=(uint8_t *)0xFF912B;
 
 extern int boot_load_kernel(const char *path);
 extern void boot_jump(void);
 
 #include "ff.h"
-
+void printString(char *str);
 static FATFS fs;                      /* area de trabalho do volume (fica no .bss) */
+
+DRESULT disk_initialize ( BYTE pdrv	);
 
 /* Monta o volume 0. Retorna 0 em sucesso, ou o codigo FRESULT. */
 int boot_mount(void)
 {
+    printString("Disk: ");
+    if( disk_initialize(0) != 0 ){
+        printString("No disk on system...\n");
+        return -1;
+    }
+    printString(" initialized\n");
+
     FRESULT r = f_mount(&fs, "", 1);  /* opt=1: monta agora, nao so' registra */
 
     if (r != FR_OK) {
-        printf("disco: f_mount falhou (FRESULT %d)\n", (int)r);
+        printString("disco: f_mount falhou \n");
         return (int)r;
     }
-    printf("disco: FAT montado\n");
+    printString("disco: FAT montado\n");
     return 0;
 }
 
 int main(void)
 {
-    char nome[32];
-    *WR_CHAR='A';
+    //char nome[32];
     
     setvbuf(stdout, NULL, _IONBF, 0);   /* sem buffer: saida aparece na hora */
-    printf("\nRigel bootstrap 0.1 newlib for m68k\nMinimum hardware duart-disk0\n");
-/*
-    printf("Qual o seu nome? ");
-    if (fgets(nome, sizeof nome, stdin)){
-        printf("Ola, %s", nome);
-    }
-    printf("malloc funcionando: ");
-    void *p = __builtin_malloc(100);
-    printf("%s\n", p ? "sim" : "nao");
-    fprintf(stdout,"Saida stdout\n");
-    fprintf(stderr,"Saida stderr\n");
-*/
-    printf("Press <enter> to go ahead...\n");
-    fgets(nome, sizeof nome, stdin);
+    printf("\nRigel bootstrap 0.9 2026/10/26 newlib for m68k\nMinimum hardware duart-disk0\n");
+    printString("\nRigel bootstrap 0.9 2026/10/26 newlib for m68k\nMinimum hardware disk0\n");
+
+   // printf("Press <enter> to go ahead...\n");
+   // fgets(nome, sizeof nome, stdin);
     /* depois de serial, video, disco e f_mount ja estarem ok */
     if (boot_mount()){
-        printf("boot: no disk present..\n");
+        printString("boot: no disk present..\n");
     }else if (boot_load_kernel(KERNEL_PATH) == BK_OK) {
-        printf("saltando para o kernel...\n");
+        printString("saltando para o kernel...\n");
+        boot_jump();
+    }else if (boot_load_kernel(KERNEL_PATH1) == BK_OK) {
+        printString("saltando para o kernel...\n");
         boot_jump();
     }
-    printf("boot falhou; ficando no monitor\n");
+    printString("boot falhou; Insira disco de boot\n");
     while(1){
-        printf("Digite algo que ecoo de volta...\n");
-        if (fgets(nome, sizeof nome, stdin)){
-            printf("%s\n", nome);
-        }
+        //printString("Digite algo que ecoo de volta...\n");
+       // if (fgets(nome, sizeof nome, stdin)){
+       //     printf("%s\n", nome);
+       // }
     }
 
 

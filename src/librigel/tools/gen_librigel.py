@@ -40,6 +40,10 @@ TABLE = [
   ("OPENPTY",  "proc", "openpty",  "int fds[2]"),
   ("SPAWN",  "proc", "spawn",  "char *path, char **argv"),
   ("SPAWN_IO",  "proc", "spawn_io",  "const char *p, char **a, int i, int o, int e"),
+  ("GETUPTIME","proc", "getuptime","void"),
+
+  ("SYSTEMTICK","proc", "getsystemtick","void"),
+  
   ("WAITPID","proc", "waitpid","long pid"),
   ("PS","proc", "ps","void *buf, long max"),
   ("KILL","proc", "kill","long pid, long sig"),
@@ -125,7 +129,7 @@ TABLE = [
   ("HASKEY",    "kbd", "haskey",     "void"),
   ("GETKBDKEY", "kbd", "getkbdkey",  "void"),
   ("GETKEY",    "kbd", "getkey",     "void"),
-  ("GETUPTIME", "proc", "getuptime", "void"),  
+  
   
 ]
 

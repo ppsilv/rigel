@@ -17,7 +17,12 @@
 #include <fileio.h>
 #include <fatfs/ff.h>
 
+#define DEBUG 0
+
+#define DEBUG_SPW if(DEBUG == 1)
+
 extern int load_elf_spawn(FIL *fd, int argc, char *argv[], int *pid);
+extern void kernel_puts(const char *s);
 
 #ifdef __m68k__
 static inline uint16_t irq_off(void)
@@ -62,12 +67,13 @@ static int spawn_load(const char *path, char **argv)
         argv = def;
     }
     while (argv[argc] != NULL && argc < 64) argc++;
-
+DEBUG_SPW    kernel_puts("TRYING TO OPEN FILE\n");
     if (f_open(&spawn_fil, path, FA_READ) == FR_OK) {
         if (load_elf_spawn(&spawn_fil, argc, argv, &pid) != 0)
             pid = -1;
         f_close(&spawn_fil);
     }
+DEBUG_SPW   kernel_puts("FILE OPENED\n");
     return pid;
 }
 
@@ -78,6 +84,7 @@ int sys_spawn(const char *path, char **argv)
     if (path == NULL) return -1;
     spawn_lock();
     pid = spawn_load(path, argv);
+DEBUG_SPW kernel_puts("spawn_load CALLED...\n");
     spawn_busy = 0;
     return pid;
 }

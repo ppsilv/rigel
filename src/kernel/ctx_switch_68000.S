@@ -41,15 +41,12 @@ OS_TickISROLD:
     rte                            | volta a executar de onde ela parou
 
 OS_TickISR:
+        ori.w   #0x0700,%sr
         move.b  #0x08,0xFF901D
         movem.l %d0-%d7/%a0-%a6,-(%sp)
 
         move.l  #systemTick,%a0
         addq.l  #1,(%a0)
-
-
-
-
 /*        
 .continua:
         addq.w  #1,tick_count
@@ -83,7 +80,7 @@ OS_TickISR:
 .notask:
         movem.l (%sp)+,%d0-%d7/%a0-%a6
         move.b  #0x08,0xFF901F
-        rte
+        rte     /*rte devolve automáticamente a mascara de interrupção anterior para o %SR*/
 */
 |
 | OS_Yield -- a task atual larga a CPU AGORA (sem esperar o tick).

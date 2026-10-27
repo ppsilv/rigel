@@ -37,3 +37,12 @@ long sys_getpid(void)
 {
     return current_task ? (long)current_task->id : 0;
 }
+extern long systemTick;
+
+long sys_getuptime(){
+    return systemTick;
+}
+
+long sys_getsystemtick(){
+    return systemTick;
+}

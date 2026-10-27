@@ -9,13 +9,14 @@ extern "C" {
 long rigel_openpty(int fds[2]);
 long rigel_spawn(char *path, char **argv);
 long rigel_spawn_io(const char *p, char **a, int i, int o, int e);
+long rigel_getuptime(void);
+long rigel_getsystemtick(void);
 long rigel_waitpid(long pid);
 long rigel_ps(void *buf, long max);
 long rigel_kill(long pid, long sig);
 long rigel_sleep(long ticks);
 long rigel_yield(void);
 long rigel_setramvector(long stub_addr, long handler_addr);
-long rigel_getuptime(void);
 
 #ifdef __cplusplus
 }

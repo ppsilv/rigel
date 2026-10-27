@@ -9,7 +9,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stddef.h>
+
+#ifdef __USE_SYSCALL_READ__
 #include "duarts.h"
+#endif
 
 #undef errno
 extern int errno;
@@ -42,14 +45,34 @@ int write(int fd, const char *buf, int len)
         errno = EBADF;
         return -1;
     }
+
+#ifndef __USE_SYSCALL_READ__
+#define VIDEO_PORT  (*(volatile unsigned char *)0x00FF8001)
+    for (int i = 0; i < len; i++) {
+        if (buf[i] == '\n')
+            VIDEO_PORT='\r';       /* terminal espera CR+LF */
+        VIDEO_PORT=buf[i];
+    }
+#endif
+
+#ifdef __USE_SYSCALL_READ__
     for (int i = 0; i < len; i++) {
         if (buf[i] == '\n')
             duart_putc('\r');       /* terminal espera CR+LF */
         duart_putc(buf[i]);
     }
+#endif
     return len;
 }
 
+#ifndef __USE_SYSCALL_READ__
+int read(int fd, char *buf, int len)
+{
+      return 0x41;  
+}
+#endif
+
+#ifdef __USE_SYSCALL_READ__
 int read(int fd, char *buf, int len)
 {
     int n = 0;
@@ -80,6 +103,7 @@ int read(int fd, char *buf, int len)
     }
     return n;
 }
+#endif
 
 int close(int fd)               { (void)fd; errno = EBADF; return -1; }
 int lseek(int fd, int off, int whence) { (void)fd; (void)off; (void)whence; return 0; }

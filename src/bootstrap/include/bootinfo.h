@@ -6,6 +6,7 @@
 #define BOOTINFO_ADDR   0x00081F00UL      /* logo abaixo do kernel */
 
 #define KERNEL_PATH    "/boot/kernel.bin"
+#define KERNEL_PATH1    "/boot/kernel.sys"
 #define KERNEL_BASE    0x00082000UL
 #define KERNEL_LIMIT   0x000A2000UL
 #define KERNEL_MAGIC   0x4B524E4CUL      /* 'KRNL' */

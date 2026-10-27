@@ -162,7 +162,7 @@ extern void sys_setramvector(uint32_t stub_addr, uint32_t handler_addr);
 void kernel_puts(const char *s);
 extern void vfs_init(void);
 extern int vfs_open(const char *path, int flags);
-
+extern void Slots_Init(void);
 
 uint32_t systemTick=0;
 uint32_t tick_count=0;
@@ -194,10 +194,11 @@ int kernel_main(){
     kernel_puts("Rigel 0.10 kernel 0.104 Redir...Ajuste fix06\n");
     do_ideinit(0,NULL);
 
-   kernel_puts("Ring buffer init\n");
-   ring_buf_init();
-//    kmalloc_init(&__kernel_end, 0x10000);   /* ajuste o tamanho pro que sobrar de RAM ali */
+    kernel_puts("Ring buffer init\n");
+    ring_buf_init();
 
+    kernel_puts("MM intializing\n");
+    Slots_Init();
 
     kernel_puts("Scheduler init\n");
     OS_Init();
@@ -208,14 +209,14 @@ int kernel_main(){
     sys_setramvector(0x000800b4,(uint32_t)trap0_entry);
     sys_setramvector(0x00080090,(uint32_t)OS_TickISR);
     sys_setramvector(0x00080096,(uint32_t)Int3Handler);
-    sys_setramvector(0x00080008,(uint32_t)exc_bus_error);
-    sys_setramvector(0x0008000C,(uint32_t)exc_address_error);
-    sys_setramvector(0x00080010,(uint32_t)exc_illegal);
-    sys_setramvector(0x00080014,(uint32_t)exc_div0);
-    sys_setramvector(0x00080020,(uint32_t)exc_priv);
-    sys_setramvector(0x0008001C,(uint32_t)exc_trapv);
-    sys_setramvector(0x00080028,(uint32_t)exc_linea);
-    sys_setramvector(0x0008002C,(uint32_t)exc_linef);
+    sys_setramvector(0x00080000,(uint32_t)exc_bus_error);
+    sys_setramvector(0x00080006,(uint32_t)exc_address_error);
+    sys_setramvector(0x0008000C,(uint32_t)exc_illegal);
+    sys_setramvector(0x00080012,(uint32_t)exc_div0);
+    sys_setramvector(0x0008001E,(uint32_t)exc_trapv);
+    sys_setramvector(0x00080024,(uint32_t)exc_priv);
+    sys_setramvector(0x00080030,(uint32_t)exc_linea);
+    sys_setramvector(0x00080036,(uint32_t)exc_linef);
 
     for(int i=0;i<0xFFFF; i++){
         volatile int j = 0; 
@@ -233,7 +234,17 @@ int kernel_main(){
 
     kernel_puts("Loading process #1 init\n");
 
-    run_scheduler_test2();
+//    run_scheduler_test2();
+    if (sys_spawn("/bin/shell.elf", NULL) <= 0){
+        kernel_puts("Falha ao dar spawn no /bin/shell.elf\n");
+        kernel_puts("Tentando /shell.elf\n");
+        if (sys_spawn("/shell.elf", NULL) <= 0){
+            kernel_puts("Falha ao dar spawn no /shell.elf\n");
+        }
+    }
+    kernel_puts("kernel initialized...\n");
+    OS_Start();   /* so' agora entrega o controle pro scheduler */
+    kernel_puts("ERROR: returned from os_start...\n");
 
     /*System never turn back from scheduler*/
 

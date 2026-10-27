@@ -48,9 +48,7 @@ Int2Handler:
 .action_200:
     move.b  #0x08,0xFF901F        
     clr.w   tick_count   
-//    move.w  #0x2700, %sr  /*Desable all interrupts supervisor mode*/       
 //    jsr     do_save2
-//    move.w  #0x2000, %sr  /*Enable all interrupts supervisor mode*/    
     movem.l (%sp)+,%d0-%d7/%a0-%a6
     rte
 
@@ -58,14 +56,9 @@ Int3Handler:
         movem.l %d0-%d7/%a0-%a6,-(%sp)
 
         MOVE.B  0x00FF9113,%D0
-
         ANDI.L  #0x000000FF,%D0  /*; Limpa a parte alta (garante o unsigned)*/
         MOVE.L  %D0, -(%A7)       /*; Empilha 4 bytes (mantém A7 alinhado em par)*/
-        
-        move.w  #0x2700, %sr  /*Desable all interrupts supervisor mode*/       
         jsr     ring_buf_put
-        move.w  #0x2000, %sr  /*Enable all interrupts supervisor mode*/    
-        
         ADDQ.L  #4,%A7          /*; Limpa os 4 bytes da pilha!*/
 
         movem.l (%sp)+,%d0-%d7/%a0-%a6

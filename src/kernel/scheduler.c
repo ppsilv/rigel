@@ -289,9 +289,9 @@ void OS_Schedule(void)
 
 void OS_Start(void)
 {
-    if (ready_head == NULL)
+    if (ready_head == NULL){
         return;   /* nenhuma tarefa criada ainda -- nada pra rodar */
-
+    }
     current_task = ready_head;
     ready_head   = ready_head->next;
     current_task->state = TASK_RUNNING;

@@ -24,6 +24,8 @@
         SYSCALL rigel_openpty                0x0054   /* SYS_OPENPTY */
         SYSCALL rigel_spawn                  0x0001   /* SYS_SPAWN */
         SYSCALL rigel_spawn_io               0x0055   /* SYS_SPAWN_IO */
+        SYSCALL rigel_getuptime              0x1050   /* SYS_GETUPTIME */
+        SYSCALL rigel_getsystemtick          0x0058   /* SYS_SYSTEMTICK */
         SYSCALL rigel_waitpid                0x004F   /* SYS_WAITPID */
         SYSCALL rigel_ps                     0x0056   /* SYS_PS */
         SYSCALL rigel_kill                   0x0057   /* SYS_KILL */
@@ -99,4 +101,3 @@
         SYSCALL rigel_haskey                 0x1051   /* SYS_HASKEY */
         SYSCALL rigel_getkbdkey              0x0050   /* SYS_GETKBDKEY */
         SYSCALL rigel_getkey                 0x1052   /* SYS_GETKEY */
-        SYSCALL rigel_getuptime              0x1050   /* SYS_GETUPTIME */

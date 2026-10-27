@@ -18,6 +18,7 @@
  *      case 0x14  0xFF9129  LEITURA  byte 1
  *      case 0x15  0xFF912B  LEITURA  byte 0
  */
+#include <stdio.h>
 #include <stdint.h>
 
 #define RTC_WINDOW      0x00FF9100UL
@@ -32,17 +33,17 @@
 #define RTC_CASE_R_B1   0x14
 #define RTC_CASE_R_B0   0x15
 
-#ifdef RTC_HOST_TEST                          /* so' para teste no PC */
-extern uint8_t rtc_test_rd(int c);
-extern void    rtc_test_wr(int c, uint8_t v);
-#define RTC_RD(c)       rtc_test_rd(c)
-#define RTC_WR(c, v)    rtc_test_wr((c), (v))
-#else
+//#ifdef RTC_HOST_TEST                          /* so' para teste no PC */
+//extern uint8_t rtc_test_rd(int c);
+//extern void    rtc_test_wr(int c, uint8_t v);
+//#define RTC_RD(c)       rtc_test_rd(c)
+//#define RTC_WR(c, v)    rtc_test_wr((c), (v))
+//#else
 #define RTC_RD(c)       (*(volatile uint8_t *)RTC_ADDR(c))
 #define RTC_WR(c, v)    (*(volatile uint8_t *)RTC_ADDR(c) = (uint8_t)(v))
-#endif
+//#endif
 
-#if defined(__m68k__) && !defined(RTC_HOST_TEST)
+//#if defined(__m68k__) && !defined(RTC_HOST_TEST)
 static inline uint16_t irq_off(void)
 {
     uint16_t sr;
@@ -50,10 +51,10 @@ static inline uint16_t irq_off(void)
     return sr;
 }
 static inline void irq_back(uint16_t sr) { __asm__ volatile ("move.w %0,%%sr" : : "d"(sr) : "memory", "cc"); }
-#else
-static inline uint16_t irq_off(void) { return 0; }
-static inline void irq_back(uint16_t sr) { (void)sr; }
-#endif
+//#else
+//static inline uint16_t irq_off(void) { return 0; }
+//static inline void irq_back(uint16_t sr) { (void)sr; }
+//#endif
 
 #ifndef RTC_WAIT_LOOPS
 #define RTC_WAIT_LOOPS  4000UL    /* ~3 a 5 ms num 68000 de poucos MHz; aumente se a leitura vier velha */
@@ -93,15 +94,32 @@ long sys_readrtc(void)
     return (long)ts;
 }
 
-long sys_writertc(long rtc)
+long sys_writertcOLD(long rtc)
 {
     uint32_t ts = (uint32_t)rtc;
     uint16_t sr = irq_off();
+
+    kprintf("Valor rtc[%ld]\n",rtc);
 
     RTC_WR(RTC_CASE_W_B3, ts >> 24);
     RTC_WR(RTC_CASE_W_B2, ts >> 16);
     RTC_WR(RTC_CASE_W_B1, ts >>  8);
     RTC_WR(RTC_CASE_W_B0, ts);                       /* este acesso faz o Pico gravar no DS1307 */
+
+    irq_back(sr);
+    return 0;
+}
+
+long sys_writertc(long rtc)
+{
+    uint32_t ts = (uint32_t)rtc;
+    uint16_t sr = irq_off();
+
+    RTC_WR(RTC_CASE_W_B3, ts >> 24);  rtc_wait();
+    RTC_WR(RTC_CASE_W_B2, ts >> 16);  rtc_wait();
+    RTC_WR(RTC_CASE_W_B1, ts >>  8);  rtc_wait();
+    RTC_WR(RTC_CASE_W_B0, ts);        /* este acesso faz o Pico gravar no DS1307 */
+    rtc_wait();                       /* deixa a gravacao terminar */
 
     irq_back(sr);
     return 0;

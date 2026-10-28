@@ -58,6 +58,7 @@
         SYSCALL rigel_vga_putchar            0x001B   /* SYS_VGAPUTCHAR */
         SYSCALL rigel_gotoxy                 0x001C   /* SYS_GOTOXY */
         SYSCALL rigel_gohome                 0x001D   /* SYS_GOHOME */
+        SYSCALL rigel_cursor                 0x0059   /* SYS_TURNCURSOR */
         SYSCALL rigel_settextcolor           0x001E   /* SYS_SETTEXTCOLOR */
         SYSCALL rigel_clrscr                 0x001F   /* SYS_CLRSCR */
         SYSCALL rigel_drawvline              0x0020   /* SYS_DRAWVLINE */

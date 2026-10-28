@@ -13,14 +13,14 @@ CROSS := m68k-elf-
 CC    := $(CROSS)gcc
 
 # librigel/include vem ANTES (headers gerados, os atuais)
-CFLAGS  := -m68000 -Wall -Os -ffreestanding -fomit-frame-pointer \
+CFLAGS  := -m68000 -Wall -Os -ffreestanding -fomit-frame-pointer -D __MC68000__\
            -ffunction-sections -fdata-sections \
            -I $(LIBRIGEL)/include  -I$(RIGELDIR)/include -D_PRINTF_FLOAT_NOT_FOUND \
 		   -include lixo/fix_winnt.h
 		   
 # -Wl,-q = guarda as relocacoes (o loader do kernel precisa delas)
 # NAO use -s / strip no .elf
-LDFLAGS := -m68000 -nostartfiles -T $(LIBRIGEL)/lib/app.ld -Wl,-q -Wl,--gc-sections \
+LDFLAGS := -m68000 -nostartfiles -T $(LIBRIGEL)/lib/app.ld -Wl,-q -Wl,--gc-sections\
            -L $(LIBRIGEL)/lib $(if $(NEWLIB_LIB),-L $(NEWLIB_LIB))
 LDLIBS  := -Wl,--start-group -lrigel -lc -lgcc -Wl,--end-group
 

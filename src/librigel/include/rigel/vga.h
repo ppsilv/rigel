@@ -10,6 +10,7 @@ long rigel_setcurvisibility(const char cur);
 long rigel_vga_putchar(long c);
 long rigel_gotoxy(long x, long y);
 long rigel_gohome(void);
+long rigel_cursor(long status);
 long rigel_settextcolor(long color,long bgcolor);
 long rigel_clrscr(void);
 long rigel_drawvline(long x, long y, long h, long color);

@@ -94,7 +94,8 @@
 #define SYS_PS                 0x0056 
 #define SYS_KILL               0x0057 
 #define SYS_SYSTEMTICK         0x0058
- 
+#define SYS_TURNCURSOR         0x0059 
+
 #define SYS_GETUPTIME          0x1050
 #define SYS_HASKEY             0x1051 
 #define SYS_GETKEY             0x1052  

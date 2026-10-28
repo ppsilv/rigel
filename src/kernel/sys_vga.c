@@ -89,3 +89,7 @@ void sys_settextcolor(long txtcolor,long bgcolor){
 long sys_clrscr(void){
     run_cmd(CMD_CLEAR_SCREEN);    
 }
+
+void sys_turncursor(long status){
+    
+}

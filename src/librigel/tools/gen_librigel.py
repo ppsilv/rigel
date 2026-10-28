@@ -79,6 +79,8 @@ TABLE = [
   ("VGAPUTCHAR", "vga", "vga_putchar", "long c"),
   ("GOTOXY",     "vga", "gotoxy",      "long x, long y"),
   ("GOHOME",     "vga", "gohome",      "void"),
+  ("TURNCURSOR", "vga", "cursor",      "long status"),
+  
   ("SETTEXTCOLOR","vga","settextcolor","long color,long bgcolor"),
   ("CLRSCR",     "vga", "clrscr",      "void"),
   ("DRAWVLINE",  "vga", "drawvline",   "long x, long y, long h, long color"),

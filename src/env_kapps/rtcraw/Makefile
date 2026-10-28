@@ -1,5 +1,5 @@
-# Makefile do rtcraw.elf (app do Rigel).
-# Uso:   make          -> gera rtcraw.elf
+# Makefile do $(TARGET).elf (app do Rigel).
+# Uso:   make          -> gera $(TARGET).elf
 #        make clean
 #
 # Ajuste so' RIGELDIR se o projeto estiver em outro lugar.
@@ -24,15 +24,17 @@ LDFLAGS := -m68000 -nostartfiles -T $(LIBRIGEL)/lib/app.ld -Wl,-q -Wl,--gc-secti
            -L $(LIBRIGEL)/lib $(if $(NEWLIB_LIB),-L $(NEWLIB_LIB))
 LDLIBS  := -Wl,--start-group -lrigel -lc -lgcc -Wl,--end-group
 
-all: rtcraw.elf
+TARGET=teste
 
-rtcraw.o: rtcraw.c
+all: $(TARGET).elf
+
+$(TARGET).o: $(TARGET).c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-rtcraw.elf: rtcraw.o $(LIBRIGEL)/lib/crt0_app.o $(LIBRIGEL)/lib/librigel.a
-	$(CC) $(LDFLAGS) $(LIBRIGEL)/lib/crt0_app.o rtcraw.o $(LDLIBS) -o $@
+$(TARGET).elf: $(TARGET).o $(LIBRIGEL)/lib/crt0_app.o $(LIBRIGEL)/lib/librigel.a
+	$(CC) $(LDFLAGS) $(LIBRIGEL)/lib/crt0_app.o $(TARGET).o $(LDLIBS) -o $@
 
 clean:
-	rm -f rtcraw.o rtcraw.elf
+	rm -f $(TARGET).o $(TARGET).elf
 
 .PHONY: all clean

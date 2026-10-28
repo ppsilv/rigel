@@ -91,5 +91,9 @@ long sys_clrscr(void){
 }
 
 void sys_turncursor(long status){
-    
+    if(cur){
+        run_cmd(CMD_SET_CUR_ON); 
+    }else{
+        run_cmd(CMD_SET_CUR_OFF); 
+    }    
 }

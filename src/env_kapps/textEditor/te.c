@@ -367,9 +367,16 @@ static void invalida_tela(void)                 /* forca o redesenho de tudo */
     desenha_ajuda();
 }
 
+static int ult_x = -1, ult_y = -1;              /* onde o cursor estava no ultimo redesenho */
+
 static void redesenhar(void)
 {
     rigel_cursor(0);
+    /* A VGA apaga a letra da celula onde o cursor passa; ao sair dela, redesenha a linha antiga */
+    if (ult_y >= 0 && ult_y < LINHAS_TELA && (ult_x != cursor_x || ult_y != cursor_y)) {
+        memset(shadow[ult_y], 0, WIDTH);
+        text_changed = 1;
+    }
     if (text_changed) {
         desenhar();
         text_changed = 0;
@@ -377,6 +384,8 @@ static void redesenhar(void)
     desenha_status();
     goto_xy(cursor_x, cursor_y);
     rigel_cursor(1);
+    ult_x = cursor_x;
+    ult_y = cursor_y;
 }
 
 /* ------------------------------------------------------------------ teclado */

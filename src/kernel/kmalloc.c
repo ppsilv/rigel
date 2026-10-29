@@ -53,6 +53,15 @@ typedef struct {
 static uint8_t  *heap_base = NULL;
 static uint32_t  heap_size = 0;
 
+
+uint32_t get_heap_size(){
+    return heap_size;
+}
+
+uint32_t get_heap_base(){
+    return (uint32_t )heap_base;
+}
+
 void kmalloc_init(void *base, uint32_t size)
 {
     heap_base = (uint8_t *) base;

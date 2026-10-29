@@ -1,9 +1,20 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/vfs.h>
 #include <sys/kmalloc.h>
 
+
+extern uint32_t get_heap_size();
+extern uint32_t get_heap_base();
+extern uint32_t get_kernel_end();
+extern uint32_t get_kernel_estack();
+extern uint32_t get_kernel_heap_start();
+extern uint32_t get_kernel_stack_size();
+extern uint32_t get_kernel_stack_init();
+extern uint32_t get_kernel_heap_end();
+extern uint32_t get_kernel_stack_end();
 
 // ============================================
 // ESTRUTURA DE DADOS DO /proc
@@ -17,10 +28,10 @@ typedef struct {
 // ============================================
 // FUNÇÕES AUXILIARES
 // ============================================
-int get_total_memory(void) { return 1024; }
-int get_kfree_memory(void)  { return 512; }
+uint32_t get_total_memory(void) { return ((get_heap_base()-524288)+get_heap_size()); }
+uint32_t get_kfree_memory(void)  { return get_heap_size(); }
 const char *get_cpu_name(void) { return "Motorola MC68K"; }
-int get_cpu_clock(void) { return 8; }
+int get_cpu_clock(void) { return 16; }
 
 // ============================================
 // PROC_READ
@@ -84,16 +95,30 @@ int proc_meminfo_open(File *file, const char *path, int flags) {
     
     char buffer[256];
     ksprintf(buffer,
+        "Kernel code end: %d KB\n"
+        "Heap start.....: %d KB\n"
+        "Heap end.......: %d KB\n"
+        "Stack init.....: %d KB\n"
+        "Stack end......: %d KB\n"
+        "Stack size.....: %d KB\n"
         "MemTotal: %d KB\n"
-        "Memkfree:  %d KB\n"
-        "MemUsed:  %d KB\n"
+        "Memkfree: %d KB\n"
+        "MemUsed.: %d KB\n"
         "MemAvail: %d KB\n",
+        get_kernel_end(),
+        get_kernel_heap_start(),
+        get_kernel_heap_end(),
+        get_kernel_stack_init(),
+        get_kernel_stack_end(),
+        get_kernel_stack_size(),
         get_total_memory(),
         get_kfree_memory(),
         get_total_memory() - get_kfree_memory(),
         get_kfree_memory() / 2
     );
     
+
+
     data->data = strdup(buffer);
     data->size = strlen(buffer);
     data->position = 0;

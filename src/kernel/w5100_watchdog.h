@@ -127,9 +127,9 @@ static void wd_thread(void *arg)
         NM_OUT_END();
         for (;;) OS_SleepTicks(6000);                    /* nao retorna (veja OS_Reap) */
     }
-    NM_OUT_BEGIN();
-    kernel_puts("[net] watchdog do chip ativo\n");
-    NM_OUT_END();
+    //NM_OUT_BEGIN();
+    //kernel_puts("[net] watchdog do chip ativo\n");
+    //NM_OUT_END();
 
     for (;;) {
         OS_SleepTicks(WD_CHECK_TICKS);

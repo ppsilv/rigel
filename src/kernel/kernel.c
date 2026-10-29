@@ -184,12 +184,37 @@ extern int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, l
 extern int main_window(void);
 extern void vga_settextcolor(uint8_t fg, uint8_t bg);
 
+static int kernel_stack_size = 0x4000;
+
+extern uint32_t __estack_init;
+extern uint32_t __estack_end;
+
+uint32_t get_kernel_end(){
+    return ((uint32_t)&__kernel_end-532480);
+}
+uint32_t get_kernel_stack_init(){
+    return ((uint32_t)&__estack_init-532480);
+}
+uint32_t get_kernel_stack_end(){
+    return ((uint32_t)&__estack_init-532480-16384);
+}
+uint32_t get_kernel_heap_start(){
+    return ((uint32_t)&__heap_start-532480);
+}
+uint32_t get_kernel_heap_end(){
+    return ((uint32_t)&__heap_end-(512*1024)-16384);
+}
+
+uint32_t get_kernel_stack_size(){
+    return kernel_stack_size;
+}
+
 int kernel_main(){
     kernel_puts("\n\n\n\n");
     short saved_sr;
     char buf[2];
     uint32_t heap_base = (uint32_t)&__kernel_end;
-    uint32_t heap_size = __estack - heap_base - 0x4000;  /* 16 KB de folga pra pilha */
+    uint32_t heap_size = __estack - heap_base - kernel_stack_size;  /* 16 KB de folga pra pilha */
     //kmalloc_init((void*)0x92000, 0x8000); ERRO FEIO PORQUE TEM VALOR CHUMBADO ESTÁTICAMENTE
     kmalloc_init(__heap_start, (uint32_t)(__heap_end - __heap_start));
 

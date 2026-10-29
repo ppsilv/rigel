@@ -40,6 +40,14 @@ extern void kernel_puts(const char *s);
 extern void kernel_puthex(uint32_t v);
 #endif
 
+/* Primitivas graficas em C puro (vga_gfx.c, retornam com rts). As sys_draw*()/sys_fillrect()
+ * de sys_vga_graph.S sao tratadores de TRAP (args em D0,D2-D7, terminam em rte) e NAO podem
+ * ser chamadas de C: derrubavam o app com ADDRESS ERROR. */
+extern void vga_hline(short x, short y, short w, unsigned char color);
+extern void vga_vline(short x, short y, short h, unsigned char color);
+extern void vga_fillrect(short x, short y, short w, short h, unsigned char color);
+#define VGA_WRITE_SCREEN (*(volatile unsigned char *)0x00FF8001)
+
 extern int vfs_dup(int oldfd, int newfd);          /* vfs.c */
 extern int sys_spawn_io(const char *path, char **argv, int fd_in, int fd_out, int fd_err);   /* spawn.c */
 int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6, long a7)
@@ -172,8 +180,8 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_CONNECT:    return sys_connect(a1, (const void *)a2, a3);
     case SYS_SETSOCKOPT: return sys_setsockopt(a1, a2, a3, (const void *)a4, a5);
     //Graphical (a1..a7 sao os argumentos do trap0_handler; aqui so' se passam os valores)
-    case SYS_DRAWVLINE:          return sys_drawvline(a1, a2, a3, a4);
-    case SYS_DRAWHLINE:          return sys_drawhline(a1, a2, a3, a4);
+    case SYS_DRAWVLINE:          vga_vline((short)a1, (short)a2, (short)a3, (unsigned char)a4); return 0;
+    case SYS_DRAWHLINE:          vga_hline((short)a1, (short)a2, (short)a3, (unsigned char)a4); return 0;
     case SYS_DRAWLINE:           return sys_drawline(a1, a2, a3, a4, a5);
     case SYS_DRAWCIRCLE:         return sys_drawcircle(a1, a2, a3, a4);
     case SYS_DRAWCIRCLEHELPER:   return sys_drawcirclehelper(a1, a2, a3, a4, a5);
@@ -181,11 +189,11 @@ int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6,
     case SYS_FILLCIRCLEHELPER:   return sys_fillcirclehelper(a1, a2, a3, a4, a5, a6);
     case SYS_DRAWROUNDRECT:      return sys_drawroundrect(a1, a2, a3, a4, a5, a6);
     case SYS_FILLROUNDRECT:      return sys_fillroundrect(a1, a2, a3, a4, a5, a6);
-    case SYS_FILLRECT:           return sys_fillrect((short)a1, (short)a2, (short)a3, (short)a4, (short)a5);
+    case SYS_FILLRECT:           vga_fillrect((short)a1, (short)a2, (short)a3, (short)a4, (unsigned char)a5); return 0;
     case SYS_FILLTRI:             return sys_filltri((float)a1, (float)a2, (float)a3, (float)a4, (float)a5, (float)a6, (char)a7);
 
     /* ---- TODO: ainda sem implementacao ---- */
-    case SYS_VGAPUTCHAR: return -1;
+    case SYS_VGAPUTCHAR: VGA_WRITE_SCREEN = (unsigned char)a1; return 0;
     case SYS_READTIME: return -1;   /* TODO */
     case SYS_WRITETIME: return -1;   /* TODO */
     case SYS_EEPROMREADBYTE: return -1;   /* TODO */

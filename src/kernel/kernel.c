@@ -9,6 +9,7 @@
 #include <sys/vfs.h>
 #include "ringbuffer.h"
 #include "w5100_netif.h"
+#include <sys/color.h>
 
 FATFS FatFs; 
 
@@ -180,7 +181,8 @@ static void do_ideinit(int argc, char *argv[])
 extern int trap0_entry(int num, long a1, long a2, long a3, long a4, long a5, long a6, long a7);
 extern int trap0_handler(int num, long a1, long a2, long a3, long a4, long a5, long a6, long a7);
 
-
+extern int main_window(void);
+extern void vga_settextcolor(uint8_t fg, uint8_t bg);
 
 int kernel_main(){
     kernel_puts("\n\n\n\n");
@@ -191,7 +193,7 @@ int kernel_main(){
     //kmalloc_init((void*)0x92000, 0x8000); ERRO FEIO PORQUE TEM VALOR CHUMBADO ESTÁTICAMENTE
     kmalloc_init(__heap_start, (uint32_t)(__heap_end - __heap_start));
 
-    kernel_puts("Rigel 0.10 kernel 0.105 20261027\n");
+    kernel_puts("Rigel 0.10 kernel 0.106 20261029(B)\n");
     do_ideinit(0,NULL);
 
     kernel_puts("Ring buffer init\n");
@@ -234,7 +236,9 @@ int kernel_main(){
 
     kernel_puts("Loading process #1 init\n");
 
-//    run_scheduler_test2();
+    //main_window();
+    //vga_settextcolor(WHITE, BLACK);
+
     if (sys_spawn("/bin/shell.elf", NULL) <= 0){
         kernel_puts("Falha ao dar spawn no /bin/shell.elf\n");
         kernel_puts("Tentando /shell.elf\n");

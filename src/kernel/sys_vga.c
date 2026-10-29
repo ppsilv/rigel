@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <rigel/rigel.h>
+#include <color.h>
 
 #define PICO_VGA_BASE 0x00FF8000
 #define WRITE_SCREEN   (*((volatile unsigned char *)(PICO_VGA_BASE + 0x01)))
@@ -69,6 +70,7 @@ void sys_setcurvisibility(const char cur){
     }
 }
 long sys_vga_putchar(long c){
+    return 0;    
 }
 long sys_gotoxy(long x, long y){
     REG_Y_LOW  = y; //(unsigned char)(row & 0x00FF);
@@ -76,9 +78,11 @@ long sys_gotoxy(long x, long y){
     REG_X_LOW  = x; //(unsigned char)(col & 0x00FF);
     REG_X_HIGH = 0;   //(unsigned char)(col > 8);
     run_cmd(CMD_SET_CUR_POS);    
+    return 0;    
 }
 long sys_gohome(void){
     run_cmd(CMD_GO_HOME);    
+    return 0;    
 }
 void sys_settextcolor(long txtcolor,long bgcolor){
     unsigned int color;
@@ -87,13 +91,26 @@ void sys_settextcolor(long txtcolor,long bgcolor){
     SET_TXT_COLOR = color;
 }
 long sys_clrscr(void){
-    run_cmd(CMD_CLEAR_SCREEN);    
+    run_cmd(CMD_CLEAR_SCREEN);
+    return 0;    
 }
 
 void sys_turncursor(long status){
-    if(cur){
+    if(status){
         run_cmd(CMD_SET_CUR_ON); 
     }else{
         run_cmd(CMD_SET_CUR_OFF); 
     }    
 }
+/* This funcions are int sys_vga_graph.S
+void sys_drawvline(uint16_t x, uint16_t y, uint16_t h, char color){}
+void sys_drawhline(int x, int y, int w, color_t color){}
+void sys_drawline(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, char color){}
+void sys_drawcircle(uint16_t x0, uint16_t y0, uint16_t r, char color){}
+void sys_drawcirclehelper(uint16_t x0, uint16_t y0, uint16_t r, unsigned char cornername, char color){}
+void sys_fillcircle(uint16_t x0, uint16_t y0, uint16_t r, char color){}
+void sys_fillcirclehelper(uint16_t x0, uint16_t y0, uint16_t r, unsigned char cornername, uint16_t delta, char color){}
+void sys_drawroundrect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t r, char color){}
+void sys_fillroundrect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t r, char color){}
+void sys_fillrect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, color_t color){}
+*/

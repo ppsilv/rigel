@@ -22,7 +22,8 @@ ASMS =  crt0.S ctx_switch_68000.S interrupts.S ./exceptions/exceptions_asm.S tra
 VASMS =
 
 # Lista de arquivos C (CORRIGIDO: não tinha um espaço)
-SRCS =  kernel.c kmalloc.c scheduler.c trap0.c ./syscall/trap_table.c ./mm/slots.c kfunctions.c \
+SRCS =  kernel.c kmalloc.c scheduler.c trap0.c ./mm/slots.c \
+./gui/main_window.c ./gui/vga_gfx.c \
 ./sys_fsdir.c ./sys_fsfile.c ./sys_fsrtc.c  ./sys_proc.c ./sys_vectors.c ./sys_fscwd.c ./w5100_netif.c ./sys_net.c ./sys_arch.c \
 ./sys_pty.c ./linedisc.c ./sys_ctl.c \
 ./sys_kbd.c \

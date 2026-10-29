@@ -116,7 +116,7 @@ int allocate_fd(File *file) {
             return i;
         }
     }
-    return -1;
+    return -2;
 }
 
 // ============================================

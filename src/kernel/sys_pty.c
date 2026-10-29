@@ -276,10 +276,19 @@ int pty_create(File **master, File **slave)
         fm = new_end_file(p, em, 1);
         fs = new_end_file(p, es, 0);
     }
+    //if (fm == NULL || fs == NULL) {
+    //    kfree_nn(fm); kfree_nn(fs); kfree_nn(em); kfree_nn(es); kfree_nn(p);
+    //    return -1;
+    //}
+    if (!p || !em || !es) {
+        kfree_nn(fm); kfree_nn(fs); kfree_nn(em); kfree_nn(es); kfree_nn(p);
+        return -11;                 /* kmalloc de pty_t ou das pontas falhou */
+    }
     if (fm == NULL || fs == NULL) {
         kfree_nn(fm); kfree_nn(fs); kfree_nn(em); kfree_nn(es); kfree_nn(p);
-        return -1;
+        return -12;                 /* kmalloc do File falhou */
     }
+
     *master = fm;
     *slave  = fs;
     return 0;
@@ -291,18 +300,18 @@ int pty_open_fds(int fds[2])
     int mfd, sfd;
 
     if (pty_create(&m, &s) != 0)
-        return -1;
+        return -2;
     mfd = allocate_fd(m);
     if (mfd < 0) {
         m->close(m); kfree(m);
         s->close(s); kfree(s);
-        return -1;
+        return -3;
     }
     sfd = allocate_fd(s);
     if (sfd < 0) {
         vfs_close(mfd);                 /* fecha o master (libera File e ponta) */
         s->close(s); kfree(s);          /* e o slave, que nunca entrou na tabela: libera o par */
-        return -1;
+        return -4;
     }
     fds[0] = mfd;
     fds[1] = sfd;

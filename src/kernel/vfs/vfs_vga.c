@@ -22,20 +22,33 @@
 #include <sys/scheduler.h>   /* OS_SleepTicks */
 #include <sys/linedisc.h>
 
+
+#define PICO_VGA_BASE     0x00FF8000UL
+#ifndef VGA_WRITE_SCREEN                /* (os testes no PC redefinem) */
+#define VGA_WRITE_SCREEN  (*((volatile uint8_t *)(PICO_VGA_BASE + 0x01)))
+#endif
+#define RUN_CMD        (*((volatile unsigned char *)(PICO_VGA_BASE + 0x3D)))
+
+#define CMD_SYSTEM_ENABLE   0xA5
+#define CMD_CLEAR_SCREEN    0xA4
+#define CMD_SET_CUR_POS     0xA3
+#define CMD_SET_TXT_COLOR   0xA2
+#define CMD_GO_HOME         0xA1
+
 extern void    kernel_puts(const char *s);
 
 /* ringbuffer.c (a ISR do teclado faz ring_buf_put) */
 extern uint8_t ring_buf_is_empty(void);
 extern uint8_t ring_buf_get(void);
 
-#define PICO_VGA_BASE     0x00FF8000UL
-#ifndef VGA_WRITE_SCREEN                /* (os testes no PC redefinem) */
-#define VGA_WRITE_SCREEN  (*((volatile uint8_t *)(PICO_VGA_BASE + 0x01)))
-#endif
 
 /* 1 = a VGA entende o backspace (0x08): o eco apaga o caractere na tela.
  * 0 = o caractere sai do buffer da linha, mas continua visivel na tela.   */
 #define VCON_BACKSPACE_OK  1
+
+static inline void run_cmd(unsigned char cmd){
+    RUN_CMD = cmd;
+}
 
 static void vga_put(uint8_t c)
 {
@@ -94,7 +107,8 @@ int vgacon_ioctl(File *file, int cmd, void *arg)
 {
     switch (cmd) {
     case TIOC_CLEAR:
-        kernel_puts("\033[2J\033[H");     /* mesma sequencia do tty_ioctl */
+        //kernel_puts("\033[2J\033[H");     /* mesma sequencia do tty_ioctl */
+        run_cmd(CMD_CLEAR_SCREEN);
         return 0;
     case TIOC_SETMODE:
         file->private_data = (void *)(uintptr_t)((uint32_t)(uintptr_t)arg & (TTY_RAW | TTY_NOECHO | TTY_NONBLOCK));

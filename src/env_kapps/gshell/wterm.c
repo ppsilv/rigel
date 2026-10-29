@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <rigel/rigel.h>
+#include <sys/color.h>
 
 /* ---- ajuste aqui ------------------------------------------------------- */
 #define COLS        60          /* colunas de texto da janela            */
@@ -216,5 +217,7 @@ fim:
     rigel_cursor(1);
     rigel_fillrect(TX - 1, TY - CHAR_H - 1, TW + 2, TH + CHAR_H + 2, COR_FUNDO);
     rigel_gotoxy(0, 0);
+    rigel_settextcolor(GREEN, BLACK);
+    rigel_clrscr();
     return 0;
 }

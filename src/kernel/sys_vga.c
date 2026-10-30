@@ -62,8 +62,15 @@
 static inline void run_cmd(unsigned char cmd){
     RUN_CMD = cmd;
 }
+#define CMD_CUR_LOCK_HIDE   0xB1   /* esconde o cursor e o Pico nao deixa mais nada religar */
+#define CMD_CUR_UNLOCK      0xB0   /* destrava e mostra o cursor */
+/* cur: 0 = esconde, 1 = mostra, 2 = esconde TRAVADO (gshell), 3 = destrava e mostra */
 void sys_setcurvisibility(const char cur){
-    if(cur){
+    if(cur == 2){
+        run_cmd(CMD_CUR_LOCK_HIDE);
+    }else if(cur == 3){
+        run_cmd(CMD_CUR_UNLOCK);
+    }else if(cur){
         run_cmd(CMD_SET_CUR_ON); 
     }else{
         run_cmd(CMD_SET_CUR_OFF); 

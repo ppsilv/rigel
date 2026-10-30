@@ -41,6 +41,7 @@ typedef struct {
     uint32_t size_and_flag;
 } km_header_t;
 
+
 #define KM_FREE_BIT     0x80000000UL
 #define KM_SIZE(h)      ((h)->size_and_flag & ~KM_FREE_BIT)
 #define KM_IS_FREE(h)   (((h)->size_and_flag & KM_FREE_BIT) != 0)
@@ -53,6 +54,12 @@ typedef struct {
 static uint8_t  *heap_base = NULL;
 static uint32_t  heap_size = 0;
 
+/* bytes de DADOS em uso agora (soma dos tamanhos dos blocos ocupados; nao conta os cabecalhos) */
+static uint32_t mem_used=0;
+
+uint32_t get_mem_used(){
+    return mem_used;
+}
 
 uint32_t get_heap_size(){
     return heap_size;
@@ -60,6 +67,78 @@ uint32_t get_heap_size(){
 
 uint32_t get_heap_base(){
     return (uint32_t )heap_base;
+}
+
+/*
+ * Percorre o heap inteiro, bloco por bloco (do mesmo jeito que o kmalloc procura),
+ * e soma os blocos livres.
+ *   *free_bytes : total de bytes de dados livres (soma de todos os blocos livres)
+ *   *largest    : maior bloco livre unico (e' o maior kmalloc que ainda daria certo)
+ *   *free_blocks: quantos blocos livres existem (muitos = heap fragmentado)
+ * Qualquer ponteiro pode ser NULL.
+ */
+static uint32_t heap_bad_addr = 0;      /* endereco do 1o cabecalho invalido achado (0 = nenhum) */
+
+/* endereco do cabecalho corrompido achado pela ultima varredura (0 = heap integro) */
+uint32_t get_heap_corrupt_addr(void)
+{
+    return heap_bad_addr;
+}
+
+void get_heap_stats(uint32_t *free_bytes, uint32_t *largest, uint32_t *free_blocks)
+{
+    short saved_sr;
+    uint8_t *p, *end;
+    uint32_t total = 0, big = 0, nfree = 0;
+
+    if (heap_base != NULL) {
+        end = heap_base + heap_size;
+        saved_sr = cs_enter();
+        heap_bad_addr = 0;
+        p = heap_base;
+        while (p + HDR_SIZE <= end) {
+            km_header_t *h;
+            uint32_t block_size;
+
+            if ((uint32_t) p & 1) {                 /* endereco impar: nem le (address error) */
+                heap_bad_addr = (uint32_t) p;
+                break;
+            }
+            h = (km_header_t *) p;
+            block_size = KM_SIZE(h);
+            if ((block_size & 3) || p + HDR_SIZE + block_size > end) {   /* cabecalho corrompido */
+                heap_bad_addr = (uint32_t) p;
+                break;
+            }
+            if (KM_IS_FREE(h)) {
+                total += block_size;
+                nfree++;
+                if (block_size > big)
+                    big = block_size;
+            }
+            p += HDR_SIZE + block_size;
+        }
+        cs_leave(saved_sr);
+    }
+    if (free_bytes)  *free_bytes  = total;
+    if (largest)     *largest     = big;
+    if (free_blocks) *free_blocks = nfree;
+}
+
+/* total de bytes livres no heap (percorre todos os blocos) */
+uint32_t get_heap_free(void)
+{
+    uint32_t f;
+    get_heap_stats(&f, NULL, NULL);
+    return f;
+}
+
+/* maior bloco livre unico */
+uint32_t get_heap_largest_free(void)
+{
+    uint32_t b;
+    get_heap_stats(NULL, &b, NULL);
+    return b;
 }
 
 void kmalloc_init(void *base, uint32_t size)
@@ -99,6 +178,7 @@ void *kmalloc(uint32_t size)
             } else {
                 KM_SET(h, block_size, 0);   /* usa o bloco inteiro, sem dividir */
             }
+            mem_used += KM_SIZE(h);     /* tamanho REAL do bloco (se nao dividiu, e' o bloco inteiro) */
             result = p + HDR_SIZE;
             break;
         }
@@ -122,6 +202,11 @@ void kfree(void *ptr)
     saved_sr=cs_enter();
 
     h = (km_header_t *) ((uint8_t *) ptr - HDR_SIZE);
+    if (KM_IS_FREE(h)) {                /* free duplo: ignora (senao mem_used e a lista se corrompem) */
+        cs_leave(saved_sr);
+        return;
+    }
+    mem_used -= KM_SIZE(h);
     KM_SET(h, KM_SIZE(h), 1);
 
     /* funde com o bloco seguinte se ele tambem estiver livre.
@@ -175,4 +260,51 @@ void *krealloc(void *ptr, uint32_t size)
     memcpy(new_ptr, ptr, old_size);
     kfree(ptr);
     return new_ptr;
+}
+
+/*
+ * Imprime na tela do kernel os 'max' primeiros blocos do heap:
+ *   endereco do cabecalho, valor bruto do cabecalho, e se esta livre (F) ou ocupado (U).
+ * Para no primeiro cabecalho invalido e mostra "CORROMPIDO". Use para achar quem estragou.
+ */
+extern void kernel_puts(const char *s);
+extern void kernel_puthex(uint32_t v);
+
+void heap_dump(uint32_t max)
+{
+    uint8_t *p, *end;
+    uint32_t n = 0;
+
+    if (heap_base == NULL) {
+        kernel_puts("heap: nao iniciado\n");
+        return;
+    }
+    end = heap_base + heap_size;
+    kernel_puts("heap base="); kernel_puthex((uint32_t) heap_base);
+    kernel_puts(" size=");     kernel_puthex(heap_size);
+    kernel_puts("\n");
+
+    p = heap_base;
+    while (p + HDR_SIZE <= end && n < max) {
+        uint32_t raw, block_size;
+
+        if ((uint32_t) p & 1) {
+            kernel_puts(" CORROMPIDO: endereco impar "); kernel_puthex((uint32_t) p); kernel_puts("\n");
+            return;
+        }
+        raw = ((km_header_t *) p)->size_and_flag;
+        block_size = raw & ~KM_FREE_BIT;
+        kernel_puts(" "); kernel_puthex((uint32_t) p);
+        kernel_puts(" hdr="); kernel_puthex(raw);
+        kernel_puts((raw & KM_FREE_BIT) ? " F " : " U ");
+        kernel_puthex(block_size);
+        if ((block_size & 3) || p + HDR_SIZE + block_size > end) {
+            kernel_puts("  <-- CORROMPIDO\n");
+            return;
+        }
+        kernel_puts("\n");
+        p += HDR_SIZE + block_size;
+        n++;
+    }
+    kernel_puts(n >= max ? " ...\n" : " fim do heap OK\n");
 }

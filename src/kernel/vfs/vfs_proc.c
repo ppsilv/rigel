@@ -16,6 +16,11 @@ extern uint32_t get_kernel_stack_init();
 extern uint32_t get_kernel_heap_end();
 extern uint32_t get_kernel_stack_end();
 
+extern uint32_t get_heap_free(void);
+extern uint32_t get_heap_largest_free(void);
+extern void kmalloc_init(void *base, uint32_t size);
+
+
 // ============================================
 // ESTRUTURA DE DADOS DO /proc
 // ============================================
@@ -32,6 +37,9 @@ uint32_t get_total_memory(void) { return ((get_heap_base()-524288)+get_heap_size
 uint32_t get_kfree_memory(void)  { return get_heap_size(); }
 const char *get_cpu_name(void) { return "Motorola MC68K"; }
 int get_cpu_clock(void) { return 16; }
+
+extern uint32_t get_mem_avail();
+extern uint32_t get_heap_largest_free();
 
 // ============================================
 // PROC_READ
@@ -85,7 +93,7 @@ size_t proc_lseek(File *file, size_t offset, int whence) {
     file->position = new_pos;
     return new_pos;
 }
-
+extern void heap_dump(uint32_t max);
 // ============================================
 // PROC_MEMINFO_OPEN
 // ============================================
@@ -101,9 +109,9 @@ int proc_meminfo_open(File *file, const char *path, int flags) {
         "Stack init.....: %d KB\n"
         "Stack end......: %d KB\n"
         "Stack size.....: %d KB\n"
-        "MemTotal: %d KB\n"
-        "Memkfree: %d KB\n"
-        "MemUsed.: %d KB\n"
+        "MemTotal.......: %d KB\n"
+        "Heap mem. free.: %d KB\n"
+        "Largest block..:  KB\n"
         "MemAvail: %d KB\n",
         get_kernel_end(),
         get_kernel_heap_start(),
@@ -112,12 +120,12 @@ int proc_meminfo_open(File *file, const char *path, int flags) {
         get_kernel_stack_end(),
         get_kernel_stack_size(),
         get_total_memory(),
-        get_kfree_memory(),
-        get_total_memory() - get_kfree_memory(),
-        get_kfree_memory() / 2
+        get_heap_free(),
+        
+        get_mem_avail()
     );
     
-
+    heap_dump(40);
 
     data->data = strdup(buffer);
     data->size = strlen(buffer);

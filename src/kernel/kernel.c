@@ -189,6 +189,7 @@ static int kernel_stack_size = 0x4000;
 extern uint32_t __estack_init;
 extern uint32_t __estack_end;
 
+
 uint32_t get_kernel_end(){
     return ((uint32_t)&__kernel_end-532480);
 }
@@ -203,6 +204,9 @@ uint32_t get_kernel_heap_start(){
 }
 uint32_t get_kernel_heap_end(){
     return ((uint32_t)&__heap_end-(512*1024)-16384);
+}
+uint32_t get_mem_avail(){
+    return (get_kernel_stack_end() - get_kernel_end());
 }
 
 uint32_t get_kernel_stack_size(){

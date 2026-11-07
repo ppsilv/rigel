@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <rigel/rigel.h>
+#include <sys/color.h>
 
 /* ---- ajuste aqui ------------------------------------------------------- */
 #define NTERM        2          /* numero de janelas (empilhadas na tela) */
@@ -32,12 +33,12 @@
 #define KEY_DEBUG    0          /* 1 = mostra na ultima linha da tela o codigo de cada tecla */
 
 /* cores 0..15 da PicoVGA: confira com o seu colors.h */
-#define COR_FUNDO       0
-#define COR_TEXTO      15
-#define COR_BARRA       1       /* barra da janela ativa (BLUE) */
-#define COR_BARRA_OFF   8       /* barra da janela inativa (cinza?) */
-#define COR_TITULO     15
-#define COR_BORDA      15
+#define COR_FUNDO       BLACK
+#define COR_TEXTO       GREEN
+#define COR_BARRA       BLUE       /* barra da janela ativa (BLUE) */
+#define COR_BARRA_OFF   WHITE       /* barra da janela inativa (cinza?) */
+#define COR_TITULO      PINK
+#define COR_BORDA       WHITE
 /* ------------------------------------------------------------------------ */
 
 #define CHAR_W 8

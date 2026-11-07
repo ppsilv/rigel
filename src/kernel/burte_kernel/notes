@@ -1,5 +1,0 @@
-crt068.s
-romstart.s
-
-start.c
-Makefile

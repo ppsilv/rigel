@@ -1,1 +1,0 @@
-nm shell | grep $1
